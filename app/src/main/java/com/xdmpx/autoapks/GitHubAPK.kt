@@ -29,15 +29,21 @@ import com.android.volley.toolbox.ImageRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.xdmpx.autoapks.database.GitHubAPKDao
+import com.xdmpx.autoapks.database.GitHubAPKDatabase
+import com.xdmpx.autoapks.database.GitHubAPKEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-private lateinit var requestQueue: RequestQueue
-
-class GitHubAPK(private val repository: String, private val context: Context) {
+class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) {
     private val TAG_DEBUG = "GitHubAPK"
+    private var database: GitHubAPKDao
     private var iconBitmap: MutableState<Bitmap?> = mutableStateOf(null)
-    private var tag: MutableState<String?> = mutableStateOf(null)
-    private var apkLink: MutableState<String?> = mutableStateOf(null)
+    private var tag: MutableState<String?> = mutableStateOf(apk.releaseTag)
+    private var apkLink: MutableState<String?> = mutableStateOf(apk.releaseLink)
     private var recomposed = 0
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     private var requestQueue: RequestQueue = Volley.newRequestQueue(
         context
@@ -46,14 +52,21 @@ class GitHubAPK(private val repository: String, private val context: Context) {
     init {
         fetchIcon()
         fetchCurrentRelease()
+        database = GitHubAPKDatabase.getInstance(context).gitHubAPKDatabase
     }
 
     private fun fetchIcon() {
-        requestMipmaphdpi(repository)
+        requestMipmaphdpi(apk.repository)
     }
 
     private fun fetchCurrentRelease() {
-        requestCurrentTag(repository)
+        requestCurrentTag(apk.repository)
+    }
+
+    private fun updateDatabase() {
+        tag.value = apk.releaseTag
+        apkLink.value = apk.releaseLink
+        scope.launch { database.update(apk) }
     }
 
     private fun requestMipmaphdpi(repository: String) {
@@ -62,7 +75,13 @@ class GitHubAPK(private val repository: String, private val context: Context) {
         val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->
             val iconName = response.names()?.get(0).toString()
             Log.d(TAG_DEBUG, "requestMipmaphdpi::$requestUrl -> $iconName")
-            requestIcon(repository, iconName)
+            val iconUrl = "https://github.com/$repository/raw/main/app/src/main/res/mipmap-hdpi/$iconName"
+            if (apk.iconURL != iconUrl) {
+                apk.iconURL = iconUrl
+                updateDatabase()
+            }
+
+            requestIcon()
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestMipmaphdpi::ERROR::$requestUrl -> ${error.message}"
@@ -79,9 +98,8 @@ class GitHubAPK(private val repository: String, private val context: Context) {
         requestQueue.add(treeInfoRequest)
     }
 
-    private fun requestIcon(repository: String, iconName: String) {
-        val requestUrl =
-            "https://github.com/$repository/raw/main/app/src/main/res/mipmap-hdpi/$iconName"
+    private fun requestIcon() {
+        val requestUrl = apk.iconURL
 
         val iconRequest = ImageRequest(requestUrl, { response ->
             Log.d(TAG_DEBUG, "requestIcon::$requestUrl -> $response")
@@ -104,7 +122,10 @@ class GitHubAPK(private val repository: String, private val context: Context) {
                     .substringBefore("</h2>")
             val tag = tagHref.substringAfter(">").substringBefore("</")
             Log.d(TAG_DEBUG, "tagsRequest::$requestUrl -> $tag")
-            this.tag.value = tag
+            if (apk.releaseTag != tag) {
+                apk.releaseTag = tag
+                updateDatabase()
+            }
             requestRelease(repository, tag)
         }, { error ->
             Log.d(
@@ -122,7 +143,10 @@ class GitHubAPK(private val repository: String, private val context: Context) {
             val apkHref = response.substringBefore(".apk\"").substringAfter("href=\"")
             val apkURL = "https://github.com/$apkHref.apk"
             Log.d(TAG_DEBUG, "requestRelease::$requestUrl -> $apkURL")
-            apkLink.value = apkURL
+            if (apk.releaseLink != apkURL) {
+                apk.releaseLink = apkURL
+                updateDatabase()
+            }
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestRelease::ERROR::$requestUrl -> ${error.message}"
@@ -139,7 +163,7 @@ class GitHubAPK(private val repository: String, private val context: Context) {
         val apkLink by remember { apkLink }
 
         Column {
-            Text(repository, modifier)
+            Text(apk.repository, modifier)
             iconBitmap?.let {
                 Image(
                     bitmap = it.asImageBitmap(), contentDescription = "", modifier
@@ -177,7 +201,7 @@ class GitHubAPK(private val repository: String, private val context: Context) {
                 tag = "URL", start = offset, end = offset
             ).firstOrNull()?.let { annotation ->
                 val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))
-                startActivity(context,browserIntent, null)
+                startActivity(context, browserIntent, null)
             }
         }, modifier = modifier)
 

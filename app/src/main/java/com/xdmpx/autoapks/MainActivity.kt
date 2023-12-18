@@ -1,6 +1,7 @@
 package com.xdmpx.autoapks
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -10,13 +11,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
+import com.xdmpx.autoapks.database.GitHubAPKDao
+import com.xdmpx.autoapks.database.GitHubAPKDatabase
+import com.xdmpx.autoapks.database.GitHubAPKEntity
 import com.xdmpx.autoapks.ui.theme.AutoAPKsTheme
+import androidx.lifecycle.coroutineScope
+import kotlinx.coroutines.launch
+
 
 class MainActivity : ComponentActivity() {
     private val TAG_DEBUG = "MainActivity"
-    private lateinit var apks: SnapshotStateList<GitHubAPK>
+    private lateinit var database: GitHubAPKDao
+    private var apks = mutableStateListOf<GitHubAPK>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,10 +38,23 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        apks = mutableStateListOf(
-            GitHubAPK("element-hq/element-x-android", this),
-            GitHubAPK("wikimedia/apps-android-wikipedia", this)
-        )
+        database = GitHubAPKDatabase.getInstance(this).gitHubAPKDatabase
+
+        this.lifecycle.coroutineScope.launch {
+            var apks = database.getAll()
+
+            if (apks.isEmpty()) {
+                val element = GitHubAPKEntity(0, "element-hq/element-x-android", null, null, null)
+                val wikipedia =
+                    GitHubAPKEntity(0, "wikimedia/apps-android-wikipedia", null, null, null)
+                database.insertAll(element, wikipedia)
+                apks = database.getAll()
+            }
+
+            apks.forEach {
+                this@MainActivity.apks.add(GitHubAPK(it, this@MainActivity))
+            }
+        }
     }
 
     @Composable
