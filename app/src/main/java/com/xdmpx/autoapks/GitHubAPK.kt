@@ -179,7 +179,7 @@ class GitHubAPK(private val repository: String, private val context: Context) {
                 val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))
                 startActivity(context,browserIntent, null)
             }
-        })
+        }, modifier = modifier)
 
     }
 }
