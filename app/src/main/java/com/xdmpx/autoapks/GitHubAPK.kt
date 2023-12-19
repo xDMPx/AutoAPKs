@@ -52,11 +52,16 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     init {
         fetchIcon()
         fetchCurrentRelease()
+        fetchAppInfo()
         database = GitHubAPKDatabase.getInstance(context).gitHubAPKDatabase
     }
 
     private fun fetchIcon() {
         requestMipmaphdpi(apk.repository)
+    }
+
+    private fun fetchAppInfo() {
+        requestApplicationId(apk.repository)
     }
 
     private fun fetchCurrentRelease() {
@@ -75,7 +80,8 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->
             val iconName = response.names()?.get(0).toString()
             Log.d(TAG_DEBUG, "requestMipmaphdpi::$requestUrl -> $iconName")
-            val iconUrl = "https://github.com/$repository/raw/main/app/src/main/res/mipmap-hdpi/$iconName"
+            val iconUrl =
+                "https://github.com/$repository/raw/main/app/src/main/res/mipmap-hdpi/$iconName"
             if (apk.iconURL != iconUrl) {
                 apk.iconURL = iconUrl
                 updateDatabase()
@@ -111,6 +117,60 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
             // TODO: Handle error
         })
         requestQueue.add(iconRequest)
+    }
+
+
+    private enum class GradleType {
+        KTS, GRADLE
+    }
+
+    private fun requestApplicationId(repository: String, buildType: GradleType = GradleType.KTS) {
+        if (buildType == GradleType.KTS) {
+            requestApplicationIdGradleKTS(repository)
+        } else if (buildType == GradleType.GRADLE) {
+            requestApplicationIdGradle(repository)
+        }
+    }
+
+    private fun requestApplicationIdGradleKTS(repository: String) {
+        val requestUrl = "https://github.com/$repository/raw/main/app/build.gradle.kts"
+        Log.d(TAG_DEBUG, "requestApplicationIdGradleKTS -> $requestUrl")
+        val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
+            val applicationID = response.substringAfter("applicationId = \"").substringBefore("\"")
+            Log.d(TAG_DEBUG, "requestApplicationIdGradleKTS::$requestUrl -> $applicationID")
+            if (apk.applicationId != applicationID) {
+                apk.applicationId = applicationID
+                updateDatabase()
+            }
+        }, { error ->
+            Log.d(
+                TAG_DEBUG, "requestApplicationIdGradleKTS::ERROR::$requestUrl -> ${error.message}"
+            )
+            requestApplicationId(repository, GradleType.GRADLE)
+            // TODO: Handle error
+        })
+
+        requestQueue.add(applicationIDRequest)
+    }
+
+    private fun requestApplicationIdGradle(repository: String) {
+        val requestUrl = "https://github.com/$repository/raw/main/app/build.gradle"
+        Log.d(TAG_DEBUG, "requestApplicationIdGradle -> $requestUrl")
+        val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
+            val applicationID = response.substringAfter("applicationId '").substringBefore("'")
+            Log.d(TAG_DEBUG, "requestApplicationIdGradle::$requestUrl -> $applicationID")
+            if (apk.applicationId != applicationID) {
+                apk.applicationId = applicationID
+                updateDatabase()
+            }
+        }, { error ->
+            Log.d(
+                TAG_DEBUG, "requestApplicationIdGradle::ERROR::$requestUrl -> ${error.message}"
+            )
+            // TODO: Handle error
+        })
+
+        requestQueue.add(applicationIDRequest)
     }
 
     private fun requestCurrentTag(repository: String) {

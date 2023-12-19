@@ -44,9 +44,10 @@ class MainActivity : ComponentActivity() {
             var apks = database.getAll()
 
             if (apks.isEmpty()) {
-                val element = GitHubAPKEntity(0, "element-hq/element-x-android", null, null, null)
+                val element =
+                    GitHubAPKEntity(0, "element-hq/element-x-android", null, null, null, null)
                 val wikipedia =
-                    GitHubAPKEntity(0, "wikimedia/apps-android-wikipedia", null, null, null)
+                    GitHubAPKEntity(0, "wikimedia/apps-android-wikipedia", null, null, null, null)
                 database.insertAll(element, wikipedia)
                 apks = database.getAll()
             }
