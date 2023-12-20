@@ -42,6 +42,8 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     private var iconBitmap: MutableState<Bitmap?> = mutableStateOf(null)
     private var tag: MutableState<String?> = mutableStateOf(apk.releaseTag)
     private var apkLink: MutableState<String?> = mutableStateOf(apk.releaseLink)
+    private var apkName: MutableState<String?> =
+        mutableStateOf("${apk.applicationId}${apk.applicationName}")
     private var recomposed = 0
     private val scope = CoroutineScope(Dispatchers.IO)
 
@@ -62,6 +64,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
 
     private fun fetchAppInfo() {
         requestApplicationId(apk.repository)
+        requestApplicationName(apk.repository)
     }
 
     private fun fetchCurrentRelease() {
@@ -71,6 +74,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     private fun updateDatabase() {
         tag.value = apk.releaseTag
         apkLink.value = apk.releaseLink
+        apkName.value = "${apk.applicationId}${apk.applicationName}"
         scope.launch { database.update(apk) }
     }
 
@@ -129,6 +133,20 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
             requestApplicationIdGradleKTS(repository)
         } else if (buildType == GradleType.GRADLE) {
             requestApplicationIdGradle(repository)
+        }
+    }
+
+    private enum class AppNameSource {
+        MANIFEST, STRINGS
+    }
+
+    private fun requestApplicationName(
+        repository: String, appNameSource: AppNameSource = AppNameSource.MANIFEST
+    ) {
+        if (appNameSource == AppNameSource.MANIFEST) {
+            requestApplicationNameManifest(repository)
+        } else if (appNameSource == AppNameSource.STRINGS) {
+            requestApplicationNameStrings(repository)
         }
     }
 
@@ -216,14 +234,65 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         requestQueue.add(tagsRequest)
     }
 
+    private fun requestApplicationNameManifest(repository: String) {
+        val requestUrl = "https://github.com/$repository/raw/main/app/src/main/AndroidManifest.xml"
+        val tagsRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
+            val application = response.substringAfter("<application").substringBefore(">")
+            if ("android:name=\"" in application) {
+                val name = application.substringAfter("android:name=\"").substringBefore("\"")
+                Log.d(TAG_DEBUG, "requestApplicationNameManifest::$requestUrl -> $name")
+                if (apk.applicationName != name) {
+                    apk.applicationName = name
+                    updateDatabase()
+                }
+            } else {
+                Log.d(TAG_DEBUG, "requestApplicationNameManifest::$requestUrl -> NO ANDROID:NAME")
+                requestApplicationName(repository, AppNameSource.STRINGS)
+            }
+        }, { error ->
+            Log.d(
+                TAG_DEBUG, "requestApplicationNameManifest::ERROR::$requestUrl -> ${error.message}"
+            )
+            requestApplicationName(repository, AppNameSource.STRINGS)
+            // TODO: Handle error
+        })
+        requestQueue.add(tagsRequest)
+    }
+
+    private fun requestApplicationNameStrings(repository: String) {
+        val requestUrl =
+            "https://github.com/$repository/raw/main/app/src/main/res/values/strings.xml"
+        val stringRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
+            if ("app_name" in response) {
+                val name = response.substringAfter("<string name=\"app_name").substringAfter("\">")
+                    .substringBefore("</")
+                Log.d(TAG_DEBUG, "requestApplicationNameStrings::$requestUrl -> $name")
+                if (apk.applicationName != name) {
+                    apk.applicationName = ".$name"
+                    updateDatabase()
+                }
+            } else {
+                Log.d(TAG_DEBUG, "requestApplicationNameStrings::$requestUrl -> NO APP_NAME")
+            }
+        }, { error ->
+            Log.d(
+                TAG_DEBUG, "requestApplicationNameStrings::ERROR::$requestUrl -> ${error.message}"
+            )
+            // TODO: Handle error
+        })
+        requestQueue.add(stringRequest)
+    }
+
     @Composable
     fun ApkCard(modifier: Modifier = Modifier) {
         val iconBitmap by remember { iconBitmap }
         val tag by remember { tag }
         val apkLink by remember { apkLink }
+        val apkName by remember { apkName }
 
         Column {
             Text(apk.repository, modifier)
+            apkName?.let { Text(it, modifier) }
             iconBitmap?.let {
                 Image(
                     bitmap = it.asImageBitmap(), contentDescription = "", modifier
