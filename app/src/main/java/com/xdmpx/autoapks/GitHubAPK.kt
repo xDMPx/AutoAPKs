@@ -197,11 +197,17 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         val tagsRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val tagHref =
                 response.substringAfter("<h2 data-view-component=\"true\" class=\"f4 d-inline\">")
-                    .substringBefore("</h2>")
-            val tag = tagHref.substringAfter(">").substringBefore("</")
+            val tag = tagHref.substringBefore("</h2>").substringAfter(">").substringBefore("</")
             Log.d(TAG_DEBUG, "tagsRequest::$requestUrl -> $tag")
+            val tagCommit =
+                tagHref.substringAfter("class=\"Link--muted\" href=\"").substringBefore("\"")
+            Log.d(TAG_DEBUG, "tagsRequest::$requestUrl -> $tagCommit")
             if (apk.releaseTag != tag) {
                 apk.releaseTag = tag
+                updateDatabase()
+            }
+            if (apk.releaseTagCommit != tagCommit) {
+                apk.releaseTagCommit = tagCommit
                 updateDatabase()
             }
             requestRelease(repository, tag)
