@@ -59,16 +59,16 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     }
 
     private fun fetchIcon() {
-        requestMipmaphdpi(apk.repository)
+        requestMipmaphdpi()
     }
 
     private fun fetchAppInfo() {
-        requestApplicationId(apk.repository)
-        requestApplicationName(apk.repository)
+        requestApplicationId()
+        requestApplicationName()
     }
 
     private fun fetchCurrentRelease() {
-        requestCurrentTag(apk.repository)
+        requestCurrentTag()
     }
 
     private fun updateDatabase() {
@@ -78,7 +78,8 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         scope.launch { database.update(apk) }
     }
 
-    private fun requestMipmaphdpi(repository: String) {
+    private fun requestMipmaphdpi() {
+        val repository = apk.repository
         val requestUrl =
             "https://github.com/$repository/tree-commit-info/main/app/src/main/res/mipmap-hdpi"
         val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->
@@ -128,11 +129,12 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         KTS, GRADLE
     }
 
-    private fun requestApplicationId(repository: String, buildType: GradleType = GradleType.KTS) {
+    private fun requestApplicationId(buildType: GradleType = GradleType.KTS) {
+        val repository = apk.repository
         if (buildType == GradleType.KTS) {
-            requestApplicationIdGradleKTS(repository)
+            requestApplicationIdGradleKTS()
         } else if (buildType == GradleType.GRADLE) {
-            requestApplicationIdGradle(repository)
+            requestApplicationIdGradle()
         }
     }
 
@@ -141,16 +143,18 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     }
 
     private fun requestApplicationName(
-        repository: String, appNameSource: AppNameSource = AppNameSource.MANIFEST
+        appNameSource: AppNameSource = AppNameSource.MANIFEST
     ) {
+        val repository = apk.repository
         if (appNameSource == AppNameSource.MANIFEST) {
-            requestApplicationNameManifest(repository)
+            requestApplicationNameManifest()
         } else if (appNameSource == AppNameSource.STRINGS) {
-            requestApplicationNameStrings(repository)
+            requestApplicationNameStrings()
         }
     }
 
-    private fun requestApplicationIdGradleKTS(repository: String) {
+    private fun requestApplicationIdGradleKTS() {
+        val repository = apk.repository
         val requestUrl = "https://github.com/$repository/raw/main/app/build.gradle.kts"
         Log.d(TAG_DEBUG, "requestApplicationIdGradleKTS -> $requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
@@ -164,14 +168,15 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
             Log.d(
                 TAG_DEBUG, "requestApplicationIdGradleKTS::ERROR::$requestUrl -> ${error.message}"
             )
-            requestApplicationId(repository, GradleType.GRADLE)
+            requestApplicationId(GradleType.GRADLE)
             // TODO: Handle error
         })
 
         requestQueue.add(applicationIDRequest)
     }
 
-    private fun requestApplicationIdGradle(repository: String) {
+    private fun requestApplicationIdGradle() {
+        val repository = apk.repository
         val requestUrl = "https://github.com/$repository/raw/main/app/build.gradle"
         Log.d(TAG_DEBUG, "requestApplicationIdGradle -> $requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
@@ -191,7 +196,8 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         requestQueue.add(applicationIDRequest)
     }
 
-    private fun requestCurrentTag(repository: String) {
+    private fun requestCurrentTag() {
+        val repository = apk.repository
         val requestUrl = "https://github.com/$repository/tags"
         Log.d(TAG_DEBUG, "tagsRequest -> $requestUrl")
         val tagsRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
@@ -210,7 +216,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
                 apk.releaseTagCommit = tagCommit
                 updateDatabase()
             }
-            requestRelease(repository, tag)
+            requestRelease(tag)
         }, { error ->
             Log.d(
                 TAG_DEBUG, "tagsRequest::ERROR::$requestUrl -> ${error.message}"
@@ -221,7 +227,8 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         requestQueue.add(tagsRequest)
     }
 
-    private fun requestRelease(repository: String, tag: String) {
+    private fun requestRelease(tag: String) {
+        val repository = apk.repository
         val requestUrl = "https://github.com/$repository/releases/expanded_assets/$tag"
         val tagsRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val apkHref = response.substringBefore(".apk\"").substringAfter("href=\"")
@@ -240,7 +247,8 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         requestQueue.add(tagsRequest)
     }
 
-    private fun requestApplicationNameManifest(repository: String) {
+    private fun requestApplicationNameManifest() {
+        val repository = apk.repository
         val requestUrl = "https://github.com/$repository/raw/main/app/src/main/AndroidManifest.xml"
         val tagsRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val application = response.substringAfter("<application").substringBefore(">")
@@ -253,19 +261,20 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
                 }
             } else {
                 Log.d(TAG_DEBUG, "requestApplicationNameManifest::$requestUrl -> NO ANDROID:NAME")
-                requestApplicationName(repository, AppNameSource.STRINGS)
+                requestApplicationName(AppNameSource.STRINGS)
             }
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestApplicationNameManifest::ERROR::$requestUrl -> ${error.message}"
             )
-            requestApplicationName(repository, AppNameSource.STRINGS)
+            requestApplicationName(AppNameSource.STRINGS)
             // TODO: Handle error
         })
         requestQueue.add(tagsRequest)
     }
 
-    private fun requestApplicationNameStrings(repository: String) {
+    private fun requestApplicationNameStrings() {
+        val repository = apk.repository
         val requestUrl =
             "https://github.com/$repository/raw/main/app/src/main/res/values/strings.xml"
         val stringRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
