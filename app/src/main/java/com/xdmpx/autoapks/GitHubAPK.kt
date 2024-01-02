@@ -6,22 +6,23 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
 import androidx.core.content.ContextCompat.startActivity
 import com.android.volley.Request
 import com.android.volley.RequestQueue
@@ -42,6 +43,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     private var iconBitmap: MutableState<Bitmap?> = mutableStateOf(null)
     private var tag: MutableState<String?> = mutableStateOf(apk.releaseTag)
     private var apkLink: MutableState<String?> = mutableStateOf(apk.releaseLink)
+    private var apkVersion: MutableState<String?> = mutableStateOf(apk.applicationVersionName)
     private var apkName: MutableState<String?> =
         mutableStateOf("${apk.applicationId}${apk.applicationName}")
     private var recomposed = 0
@@ -56,6 +58,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         fetchCurrentRelease()
         fetchAppInfo()
         database = GitHubAPKDatabase.getInstance(context).gitHubAPKDatabase
+        setInstalledApplicationVersion()
     }
 
     private fun fetchIcon() {
@@ -72,9 +75,11 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     }
 
     private fun updateDatabase() {
+        setInstalledApplicationVersion()
         tag.value = apk.releaseTag
         apkLink.value = apk.releaseLink
         apkName.value = "${apk.applicationId}${apk.applicationName}"
+        apkVersion.value = apk.applicationVersionName
         scope.launch { database.update(apk) }
     }
 
@@ -130,7 +135,6 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     }
 
     private fun requestApplicationId(buildType: GradleType = GradleType.KTS) {
-        val repository = apk.repository
         if (buildType == GradleType.KTS) {
             requestApplicationIdGradleKTS()
         } else if (buildType == GradleType.GRADLE) {
@@ -145,7 +149,6 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     private fun requestApplicationName(
         appNameSource: AppNameSource = AppNameSource.MANIFEST
     ) {
-        val repository = apk.repository
         if (appNameSource == AppNameSource.MANIFEST) {
             requestApplicationNameManifest()
         } else if (appNameSource == AppNameSource.STRINGS) {
@@ -298,30 +301,79 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         requestQueue.add(stringRequest)
     }
 
+    private fun setInstalledApplicationVersion() {
+        val name = apkName.value
+        Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$name")
+        name?.let {
+            val version = Utils.getAppVersionByName(context, it)
+            Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$name -> $version")
+            if (apk.applicationVersionName != version) {
+                apk.applicationVersionName = version
+                updateDatabase()
+            }
+
+        }
+    }
+
     @Composable
     fun ApkCard(modifier: Modifier = Modifier) {
         val iconBitmap by remember { iconBitmap }
         val tag by remember { tag }
         val apkLink by remember { apkLink }
         val apkName by remember { apkName }
+        val apkVersion by remember { apkVersion }
 
-        Column {
-            Text(apk.repository, modifier)
-            apkName?.let { Text(it, modifier) }
-            iconBitmap?.let {
-                Image(
-                    bitmap = it.asImageBitmap(), contentDescription = "", modifier
-                )
+        Row(
+            modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Max)
+        ) {
+            Column(modifier.fillMaxHeight()) {
+                Text(apk.repository, modifier)
+                apkName?.let { Text(it, modifier) }
+                iconBitmap?.let {
+                    Image(
+                        bitmap = it.asImageBitmap(), contentDescription = "", modifier
+                    )
+                }
             }
-            tag?.let { tag ->
-                apkLink?.let { AnnotatedClickableText(tag, it) }
+            if (apkVersion.isNullOrEmpty()) {
+                Box(
+                    contentAlignment = Alignment.CenterEnd,
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight()
+                ) {
+                    apkLink?.let { InstallButton(it, modifier) }
+                }
+            } else {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight()
+                ) {
+                    apkVersion?.let { Text(it, modifier) }
+                }
             }
+
         }
-        recomposed++
 
+        recomposed++
         Log.d(TAG_DEBUG, "$recomposed")
     }
 
+    @Composable
+    fun InstallButton(apkLink: String, modifier: Modifier = Modifier) {
+        Button(onClick = {
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(apkLink))
+            startActivity(context, browserIntent, null)
+        }, modifier) {
+            Text("Install")
+        }
+    }
+
+    /*
     @Composable
     fun AnnotatedClickableText(text: String, url: String, modifier: Modifier = Modifier) {
         val annotatedText = buildAnnotatedString {
@@ -350,4 +402,6 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         }, modifier = modifier)
 
     }
+    */
+
 }

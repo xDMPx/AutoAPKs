@@ -45,10 +45,10 @@ class MainActivity : ComponentActivity() {
 
             if (apks.isEmpty()) {
                 val element = GitHubAPKEntity(
-                    0, "element-hq/element-x-android", null, null, null, null, null, null
+                    0, "element-hq/element-x-android", null, null, null, null, null, null, null
                 )
                 val wikipedia = GitHubAPKEntity(
-                    0, "wikimedia/apps-android-wikipedia", null, null, null, null, null, null
+                    0, "wikimedia/apps-android-wikipedia", null, null, null, null, null, null, null
                 )
 
                 database.insertAll(element, wikipedia)
@@ -64,8 +64,8 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun Main(modifier: Modifier = Modifier) {
         val apks = remember { apks }
-        Column {
-            Column {
+        Column(modifier) {
+            Column(modifier) {
                 for (apk in apks) {
                     apk.ApkCard(modifier)
                 }
