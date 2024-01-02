@@ -12,8 +12,8 @@ data class GitHubAPKEntity(
     @ColumnInfo(name = "icon_url") var iconURL: String?,
     @ColumnInfo(name = "application_id") var applicationId: String?,
     @ColumnInfo(name = "application_name") var applicationName: String?,
-    @ColumnInfo(name = "application__version_name") var applicationVersionName: String?,
+    @ColumnInfo(name = "application_version_name") var applicationVersionName: String?,
+    @ColumnInfo(name = "release_commit") var releaseCommit: String?,
     @ColumnInfo(name = "release_tag") var releaseTag: String?,
-    @ColumnInfo(name = "release_tag_commit") var releaseTagCommit: String?,
     @ColumnInfo(name = "release_link") var releaseLink: String?,
 )

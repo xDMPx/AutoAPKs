@@ -41,7 +41,6 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     private val TAG_DEBUG = "GitHubAPK"
     private var database: GitHubAPKDao
     private var iconBitmap: MutableState<Bitmap?> = mutableStateOf(null)
-    private var tag: MutableState<String?> = mutableStateOf(apk.releaseTag)
     private var apkLink: MutableState<String?> = mutableStateOf(apk.releaseLink)
     private var apkVersion: MutableState<String?> = mutableStateOf(apk.applicationVersionName)
     private var apkName: MutableState<String?> =
@@ -71,12 +70,11 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     }
 
     private fun fetchCurrentRelease() {
-        requestCurrentTag()
+        requestLatestRelease()
     }
 
     private fun updateDatabase() {
         setInstalledApplicationVersion()
-        tag.value = apk.releaseTag
         apkLink.value = apk.releaseLink
         apkName.value = "${apk.applicationId}${apk.applicationName}"
         apkVersion.value = apk.applicationVersionName
@@ -199,55 +197,59 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         requestQueue.add(applicationIDRequest)
     }
 
-    private fun requestCurrentTag() {
+    private fun requestLatestRelease() {
         val repository = apk.repository
-        val requestUrl = "https://github.com/$repository/tags"
-        Log.d(TAG_DEBUG, "tagsRequest -> $requestUrl")
-        val tagsRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
-            val tagHref =
-                response.substringAfter("<h2 data-view-component=\"true\" class=\"f4 d-inline\">")
-            val tag = tagHref.substringBefore("</h2>").substringAfter(">").substringBefore("</")
-            Log.d(TAG_DEBUG, "tagsRequest::$requestUrl -> $tag")
-            val tagCommit =
-                tagHref.substringAfter("class=\"Link--muted\" href=\"").substringBefore("\"")
-            Log.d(TAG_DEBUG, "tagsRequest::$requestUrl -> $tagCommit")
-            if (apk.releaseTag != tag) {
-                apk.releaseTag = tag
+        val requestUrl = "https://github.com/$repository/releases/latest"
+
+        Log.d(TAG_DEBUG, "requestLatestRelease -> $requestUrl")
+        val releaseRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
+            val releaseCommit =
+                response.substringAfter("data-hovercard-type=\"commit\" data-hovercard-url=\"")
+                    .substringBefore("\"")
+            Log.d(TAG_DEBUG, "requestLatestRelease::$requestUrl -> $releaseCommit")
+            if (apk.releaseCommit != releaseCommit) {
+                apk.releaseCommit = releaseCommit
                 updateDatabase()
             }
-            if (apk.releaseTagCommit != tagCommit) {
-                apk.releaseTagCommit = tagCommit
+            val releaseTag = response.substringAfter("aria-label=\"Tag\"")
+                .substringAfter("<span class=\"ml-1\">").substringBefore("</span>").trim()
+            Log.d(TAG_DEBUG, "requestLatestRelease::$requestUrl -> $releaseTag")
+            if (apk.releaseTag != releaseTag) {
+                apk.releaseTag = releaseTag
                 updateDatabase()
             }
-            requestRelease(tag)
+            requestLatestReleaseAssets()
         }, { error ->
             Log.d(
-                TAG_DEBUG, "tagsRequest::ERROR::$requestUrl -> ${error.message}"
+                TAG_DEBUG, "requestLatestRelease::ERROR::$requestUrl -> ${error.message}"
             )
             // TODO: Handle error
         })
 
-        requestQueue.add(tagsRequest)
+        requestQueue.add(releaseRequest)
     }
 
-    private fun requestRelease(tag: String) {
+    private fun requestLatestReleaseAssets() {
         val repository = apk.repository
+        val tag = apk.releaseTag
         val requestUrl = "https://github.com/$repository/releases/expanded_assets/$tag"
-        val tagsRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
+
+        Log.d(TAG_DEBUG, "requestLatestReleaseAssets::$requestUrl")
+        val assetsRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val apkHref = response.substringBefore(".apk\"").substringAfter("href=\"")
             val apkURL = "https://github.com/$apkHref.apk"
-            Log.d(TAG_DEBUG, "requestRelease::$requestUrl -> $apkURL")
+            Log.d(TAG_DEBUG, "requestLatestReleaseAssets::$requestUrl -> $apkURL")
             if (apk.releaseLink != apkURL) {
                 apk.releaseLink = apkURL
                 updateDatabase()
             }
         }, { error ->
             Log.d(
-                TAG_DEBUG, "requestRelease::ERROR::$requestUrl -> ${error.message}"
+                TAG_DEBUG, "requestLatestReleaseAssets::ERROR::$requestUrl -> ${error.message}"
             )
             // TODO: Handle error
         })
-        requestQueue.add(tagsRequest)
+        requestQueue.add(assetsRequest)
     }
 
     private fun requestApplicationNameManifest() {
@@ -318,7 +320,6 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     @Composable
     fun ApkCard(modifier: Modifier = Modifier) {
         val iconBitmap by remember { iconBitmap }
-        val tag by remember { tag }
         val apkLink by remember { apkLink }
         val apkName by remember { apkName }
         val apkVersion by remember { apkVersion }
