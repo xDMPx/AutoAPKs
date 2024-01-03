@@ -43,8 +43,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     private var iconBitmap: MutableState<Bitmap?> = mutableStateOf(null)
     private var apkLink: MutableState<String?> = mutableStateOf(apk.releaseLink)
     private var apkVersion: MutableState<String?> = mutableStateOf(apk.applicationVersionName)
-    private var apkName: MutableState<String?> =
-        mutableStateOf("${apk.applicationId}${apk.applicationName}")
+    private var apkName: MutableState<String?> = mutableStateOf(deriveAppName())
     private var recomposed = 0
     private val scope = CoroutineScope(Dispatchers.IO)
 
@@ -73,10 +72,22 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         requestLatestRelease()
     }
 
+    private fun deriveAppName(): String? {
+        apk.applicationName?.let { name ->
+            if (!name.startsWith('.')) {
+                return name
+            }
+            apk.applicationId?.let {
+                return "$it$name"
+            }
+        }
+        return null
+    }
+
     private fun updateDatabase() {
         setInstalledApplicationVersion()
         apkLink.value = apk.releaseLink
-        apkName.value = "${apk.applicationId}${apk.applicationName}"
+        apkName.value = deriveAppName()
         apkVersion.value = apk.applicationVersionName
         scope.launch { database.update(apk) }
     }

@@ -13,9 +13,15 @@ object Utils {
         val installedApplications = packageManager.getInstalledPackages(0)
 
         for (appInfo in installedApplications) {
-            if (appInfo.applicationInfo.name == appName) {
+            if (appInfo.applicationInfo.name.isNullOrBlank()) {
+                continue
+            }
+            if (appInfo.applicationInfo.name == appName || appInfo.packageName == appName) {
                 val version = appInfo.versionName
-                Log.d(TAG_DEBUG, "getAppVersionByName::$appName $version")
+                Log.d(
+                    TAG_DEBUG,
+                    "getAppVersionByName::$appName ${appInfo.applicationInfo.name}::$version"
+                )
                 return version
             }
         }

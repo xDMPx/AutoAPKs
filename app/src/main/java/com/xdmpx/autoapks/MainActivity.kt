@@ -46,9 +46,9 @@ class MainActivity : ComponentActivity() {
             if (apks.isEmpty()) {
                 val element = GitHubAPKEntity("element-hq/element-x-android")
                 val wikipedia = GitHubAPKEntity("wikimedia/apps-android-wikipedia")
+                val duckduckgo = GitHubAPKEntity("duckduckgo/Android")
 
-
-                database.insertAll(element, wikipedia)
+                database.insertAll(element, wikipedia, duckduckgo)
                 apks = database.getAll()
             }
 
