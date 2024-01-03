@@ -7,13 +7,13 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "GitHubAPK")
 data class GitHubAPKEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int,
     @ColumnInfo(name = "repository") var repository: String,
-    @ColumnInfo(name = "icon_url") var iconURL: String?,
-    @ColumnInfo(name = "application_id") var applicationId: String?,
-    @ColumnInfo(name = "application_name") var applicationName: String?,
-    @ColumnInfo(name = "application_version_name") var applicationVersionName: String?,
-    @ColumnInfo(name = "release_commit") var releaseCommit: String?,
-    @ColumnInfo(name = "release_tag") var releaseTag: String?,
-    @ColumnInfo(name = "release_link") var releaseLink: String?,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @ColumnInfo(name = "icon_url") var iconURL: String? = null,
+    @ColumnInfo(name = "application_id") var applicationId: String? = null,
+    @ColumnInfo(name = "application_name") var applicationName: String? = null,
+    @ColumnInfo(name = "application_version_name") var applicationVersionName: String? = null,
+    @ColumnInfo(name = "release_commit") var releaseCommit: String? = null,
+    @ColumnInfo(name = "release_tag") var releaseTag: String? = null,
+    @ColumnInfo(name = "release_link") var releaseLink: String? = null,
 )
