@@ -171,7 +171,8 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         val requestUrl = "https://github.com/$repository/raw/main/app/build.gradle.kts"
         Log.d(TAG_DEBUG, "requestApplicationIdGradleKTS -> $requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
-            val applicationID = response.substringAfter("applicationId = \"").substringBefore("\"")
+            var applicationID = response.substringAfter("applicationId = ").substringBefore("\n")
+            applicationID = applicationID.trim('\'','\"')
             Log.d(TAG_DEBUG, "requestApplicationIdGradleKTS::$requestUrl -> $applicationID")
             if (apk.applicationId != applicationID) {
                 apk.applicationId = applicationID
@@ -193,7 +194,8 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         val requestUrl = "https://github.com/$repository/raw/main/app/build.gradle"
         Log.d(TAG_DEBUG, "requestApplicationIdGradle -> $requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
-            val applicationID = response.substringAfter("applicationId '").substringBefore("'")
+            var applicationID = response.substringAfter("applicationId ").substringBefore("\n")
+            applicationID = applicationID.trim('\'','\"')
             Log.d(TAG_DEBUG, "requestApplicationIdGradle::$requestUrl -> $applicationID")
             if (apk.applicationId != applicationID) {
                 apk.applicationId = applicationID

@@ -1,7 +1,6 @@
 package com.xdmpx.autoapks
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -50,8 +49,9 @@ class MainActivity : ComponentActivity() {
                 val element = GitHubAPKEntity("element-hq/element-x-android")
                 val wikipedia = GitHubAPKEntity("wikimedia/apps-android-wikipedia")
                 val duckduckgo = GitHubAPKEntity("duckduckgo/Android")
+                val syncthing = GitHubAPKEntity("syncthing/syncthing-android")
 
-                database.insertAll(element, wikipedia, duckduckgo)
+                database.insertAll(element, wikipedia, duckduckgo, syncthing)
                 apks = database.getAll()
             }
 
