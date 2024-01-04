@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
@@ -340,7 +341,11 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
                 .fillMaxWidth()
                 .height(IntrinsicSize.Max)
         ) {
-            Column(modifier.fillMaxHeight()) {
+            Column(
+                modifier
+                    .fillMaxHeight()
+                    .weight(0.75f)
+            ) {
                 Text(apk.repository, modifier)
                 apkName?.let { Text(it, modifier) }
                 iconBitmap?.let {
@@ -349,26 +354,21 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
                     )
                 }
             }
-            if (apkVersion.isNullOrEmpty()) {
-                Box(
-                    contentAlignment = Alignment.CenterEnd,
-                    modifier = modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight()
-                ) {
-                    apkLink?.let { InstallButton(it, modifier) }
-                }
-            } else {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight()
-                ) {
-                    apkVersion?.let { Text(it, modifier) }
+            Box(Modifier.weight(0.25f)) {
+                if (apkVersion.isNullOrEmpty()) {
+                    Box(
+                        contentAlignment = Alignment.CenterEnd, modifier = modifier.fillMaxSize()
+                    ) {
+                        apkLink?.let { InstallButton(it, modifier) }
+                    }
+                } else {
+                    Box(
+                        contentAlignment = Alignment.Center, modifier = modifier.fillMaxSize()
+                    ) {
+                        apkVersion?.let { Text(it, modifier) }
+                    }
                 }
             }
-
         }
 
         recomposed++
