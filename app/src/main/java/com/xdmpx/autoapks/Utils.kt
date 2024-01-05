@@ -7,7 +7,9 @@ import android.util.Log
 object Utils {
     private val TAG_DEBUG = "Utils"
 
-    fun getAppVersionByName(context: Context, appName: String): String? {
+    data class ApplicationVersion(val name: String, val code: Long)
+
+    fun getAppVersionByName(context: Context, appName: String): ApplicationVersion? {
         Log.d(TAG_DEBUG, "getAppVersionByName::$appName")
         val packageManager: PackageManager = context.packageManager
         val installedApplications = packageManager.getInstalledPackages(0)
@@ -17,7 +19,8 @@ object Utils {
                 continue
             }
             if (appInfo.applicationInfo.name == appName || appInfo.packageName == appName) {
-                val version = appInfo.versionName
+                val version = ApplicationVersion(appInfo.versionName, appInfo.longVersionCode)
+
                 Log.d(
                     TAG_DEBUG,
                     "getAppVersionByName::$appName ${appInfo.applicationInfo.name}::$version"

@@ -1,6 +1,7 @@
 package com.xdmpx.autoapks
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -58,6 +59,14 @@ class MainActivity : ComponentActivity() {
             apks.forEach {
                 this@MainActivity.apks.add(GitHubAPK(it, this@MainActivity))
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG_DEBUG, "onResume")
+        apks.forEach{
+            it.refresh()
         }
     }
 

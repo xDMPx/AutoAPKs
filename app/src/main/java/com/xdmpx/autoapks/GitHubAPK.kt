@@ -44,6 +44,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     private var iconBitmap: MutableState<Bitmap?> = mutableStateOf(null)
     private var apkLink: MutableState<String?> = mutableStateOf(apk.releaseLink)
     private var apkVersion: MutableState<String?> = mutableStateOf(apk.applicationVersionName)
+    private var apkUpdate: MutableState<Boolean?> = mutableStateOf(apk.toUpdate)
     private var apkName: MutableState<String?> = mutableStateOf(deriveAppName())
     private var recomposed = 0
     private val scope = CoroutineScope(Dispatchers.IO)
@@ -73,6 +74,11 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         requestLatestRelease()
     }
 
+    public fun refresh() {
+        setInstalledApplicationVersion()
+        fetchCurrentRelease()
+    }
+
     private fun deriveAppName(): String? {
         apk.applicationName?.let { name ->
             if (!name.startsWith('.')) {
@@ -90,6 +96,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         apkLink.value = apk.releaseLink
         apkName.value = deriveAppName()
         apkVersion.value = apk.applicationVersionName
+        apkUpdate.value = apk.toUpdate
         scope.launch { database.update(apk) }
     }
 
@@ -172,7 +179,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         Log.d(TAG_DEBUG, "requestApplicationIdGradleKTS -> $requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             var applicationID = response.substringAfter("applicationId = ").substringBefore("\n")
-            applicationID = applicationID.trim('\'','\"')
+            applicationID = applicationID.trim('\'', '\"')
             Log.d(TAG_DEBUG, "requestApplicationIdGradleKTS::$requestUrl -> $applicationID")
             if (apk.applicationId != applicationID) {
                 apk.applicationId = applicationID
@@ -195,7 +202,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         Log.d(TAG_DEBUG, "requestApplicationIdGradle -> $requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             var applicationID = response.substringAfter("applicationId ").substringBefore("\n")
-            applicationID = applicationID.trim('\'','\"')
+            applicationID = applicationID.trim('\'', '\"')
             Log.d(TAG_DEBUG, "requestApplicationIdGradle::$requestUrl -> $applicationID")
             if (apk.applicationId != applicationID) {
                 apk.applicationId = applicationID
@@ -222,6 +229,9 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
                     .substringBefore("\"")
             Log.d(TAG_DEBUG, "requestLatestRelease::$requestUrl -> $releaseCommit")
             if (apk.releaseCommit != releaseCommit) {
+                if (!apk.releaseCommit.isNullOrEmpty()) {
+                    apk.toUpdate = true
+                }
                 apk.releaseCommit = releaseCommit
                 updateDatabase()
             }
@@ -323,8 +333,21 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         name?.let {
             val version = Utils.getAppVersionByName(context, it)
             Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$name -> $version")
-            if (apk.applicationVersionName != version) {
-                apk.applicationVersionName = version
+            val versionName = version?.name
+            val versionCode = version?.code
+            var update = false
+            // TODO: Check if the new version is actually newer
+            if (apk.applicationVersionCode != versionCode) {
+                Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$name -> UPDATE DETECTED")
+                apk.applicationVersionCode = versionCode
+                apk.toUpdate = false
+                update = true
+            }
+            if (apk.applicationVersionName != versionName) {
+                apk.applicationVersionName = versionName
+                update = true
+            }
+            if (update) {
                 updateDatabase()
             }
 
@@ -337,6 +360,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         val apkLink by remember { apkLink }
         val apkName by remember { apkName }
         val apkVersion by remember { apkVersion }
+        val apkUpdate by remember { apkUpdate }
 
         Row(
             modifier
@@ -363,6 +387,12 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
                     ) {
                         apkLink?.let { InstallButton(it, modifier) }
                     }
+                } else if (apkUpdate == true) {
+                    Box(
+                        contentAlignment = Alignment.CenterEnd, modifier = modifier.fillMaxSize()
+                    ) {
+                        apkLink?.let { UpdateButton(it, modifier) }
+                    }
                 } else {
                     Box(
                         contentAlignment = Alignment.Center, modifier = modifier.fillMaxSize()
@@ -384,6 +414,16 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
             startActivity(context, browserIntent, null)
         }, modifier) {
             Text("Install")
+        }
+    }
+
+    @Composable
+    fun UpdateButton(apkLink: String, modifier: Modifier = Modifier) {
+        Button(onClick = {
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(apkLink))
+            startActivity(context, browserIntent, null)
+        }, modifier) {
+            Text("Update")
         }
     }
 
