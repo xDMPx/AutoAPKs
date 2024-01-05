@@ -54,11 +54,22 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     )
 
     init {
-        fetchIcon()
-        fetchCurrentRelease()
-        fetchAppInfo()
         database = GitHubAPKDatabase.getInstance(context).gitHubAPKDatabase
-        setInstalledApplicationVersion()
+        if (apk.repositoryDefaultBranch.isNullOrBlank()) {
+            fetchDefaultRepoBranch {
+                apk.repositoryDefaultBranch = it
+                updateDatabase()
+                fetchIcon()
+                fetchCurrentRelease()
+                fetchAppInfo()
+                setInstalledApplicationVersion()
+            }
+        } else {
+            fetchIcon()
+            fetchCurrentRelease()
+            fetchAppInfo()
+            setInstalledApplicationVersion()
+        }
     }
 
     private fun fetchIcon() {
@@ -77,6 +88,31 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     public fun refresh() {
         setInstalledApplicationVersion()
         fetchCurrentRelease()
+    }
+
+    private fun fetchDefaultRepoBranch(onResult: (branchName: String) -> Unit) {
+        val repository = apk.repository
+        val requestUrl = "https://github.com/$repository/branches"
+
+        Log.d(TAG_DEBUG, "fetchDefaultRepoBranch -> $requestUrl")
+        val branchesRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
+            val defaultBranchList =
+                response.substringAfter("<h3 class=\"Box-title\">Default branch</h3>")
+                    .substringBefore("</ul>")
+            val defaultBranchName =
+                defaultBranchList.substringAfter("class=\"branch-name").substringAfter(">")
+                    .substringBefore("</a>")
+            Log.d(TAG_DEBUG, "fetchDefaultRepoBranch::$requestUrl -> $defaultBranchName ")
+            onResult(defaultBranchName)
+        }, { error ->
+            Log.d(
+                TAG_DEBUG, "fetchDefaultRepoBranch::ERROR::$requestUrl -> ${error.message}"
+            )
+            requestApplicationId(GradleType.GRADLE)
+            // TODO: Handle error
+        })
+
+        requestQueue.add(branchesRequest)
     }
 
     private fun deriveAppName(): String? {
@@ -102,13 +138,16 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
 
     private fun requestMipmaphdpi() {
         val repository = apk.repository
+        val branchName = apk.repositoryDefaultBranch
         val requestUrl =
-            "https://github.com/$repository/tree-commit-info/main/app/src/main/res/mipmap-hdpi"
+            "https://github.com/$repository/tree-commit-info/$branchName/app/src/main/res/mipmap-hdpi"
+
+        Log.d(TAG_DEBUG, "requestMipmaphdpi::$requestUrl")
         val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->
             val iconName = response.names()?.get(0).toString()
             Log.d(TAG_DEBUG, "requestMipmaphdpi::$requestUrl -> $iconName")
             val iconUrl =
-                "https://github.com/$repository/raw/main/app/src/main/res/mipmap-hdpi/$iconName"
+                "https://github.com/$repository/raw/$branchName/app/src/main/res/mipmap-hdpi/$iconName"
             if (apk.iconURL != iconUrl) {
                 apk.iconURL = iconUrl
                 updateDatabase()
@@ -175,8 +214,10 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
 
     private fun requestApplicationIdGradleKTS() {
         val repository = apk.repository
-        val requestUrl = "https://github.com/$repository/raw/main/app/build.gradle.kts"
-        Log.d(TAG_DEBUG, "requestApplicationIdGradleKTS -> $requestUrl")
+        val branchName = apk.repositoryDefaultBranch
+        val requestUrl = "https://github.com/$repository/raw/$branchName/app/build.gradle.kts"
+
+        Log.d(TAG_DEBUG, "requestApplicationIdGradleKTS::$requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             var applicationID = response.substringAfter("applicationId = ").substringBefore("\n")
             applicationID = applicationID.trim('\'', '\"')
@@ -198,8 +239,10 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
 
     private fun requestApplicationIdGradle() {
         val repository = apk.repository
-        val requestUrl = "https://github.com/$repository/raw/main/app/build.gradle"
-        Log.d(TAG_DEBUG, "requestApplicationIdGradle -> $requestUrl")
+        val branchName = apk.repositoryDefaultBranch
+        val requestUrl = "https://github.com/$repository/raw/$branchName/app/build.gradle"
+
+        Log.d(TAG_DEBUG, "requestApplicationIdGradle::$requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             var applicationID = response.substringAfter("applicationId ").substringBefore("\n")
             applicationID = applicationID.trim('\'', '\"')
@@ -222,7 +265,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         val repository = apk.repository
         val requestUrl = "https://github.com/$repository/releases/latest"
 
-        Log.d(TAG_DEBUG, "requestLatestRelease -> $requestUrl")
+        Log.d(TAG_DEBUG, "requestLatestRelease::$requestUrl")
         val releaseRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val releaseCommit =
                 response.substringAfter("data-hovercard-type=\"commit\" data-hovercard-url=\"")
@@ -278,7 +321,10 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
 
     private fun requestApplicationNameManifest() {
         val repository = apk.repository
-        val requestUrl = "https://github.com/$repository/raw/main/app/src/main/AndroidManifest.xml"
+        val branchName = apk.repositoryDefaultBranch
+        val requestUrl = "https://github.com/$repository/raw/$branchName/app/src/main/AndroidManifest.xml"
+
+        Log.d(TAG_DEBUG, "requestApplicationNameManifest::$requestUrl")
         val tagsRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val application = response.substringAfter("<application").substringBefore(">")
             if ("android:name=\"" in application) {
@@ -304,8 +350,11 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
 
     private fun requestApplicationNameStrings() {
         val repository = apk.repository
+        val branchName = apk.repositoryDefaultBranch
         val requestUrl =
-            "https://github.com/$repository/raw/main/app/src/main/res/values/strings.xml"
+            "https://github.com/$repository/raw/main/app/src/$branchName/res/values/strings.xml"
+
+        Log.d(TAG_DEBUG, "requestApplicationNameStrings::$requestUrl")
         val stringRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             if ("app_name" in response) {
                 val name = response.substringAfter("<string name=\"app_name").substringAfter("\">")
