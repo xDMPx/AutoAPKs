@@ -64,13 +64,11 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
                 fetchIcon()
                 fetchCurrentRelease()
                 fetchAppInfo()
-                setInstalledApplicationVersion()
             }
         } else {
             fetchIcon()
             fetchCurrentRelease()
             fetchAppInfo()
-            setInstalledApplicationVersion()
         }
     }
 
@@ -81,6 +79,8 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     private fun fetchAppInfo() {
         requestApplicationId()
         requestApplicationName()
+        setPackageName()
+        setInstalledApplicationVersion()
     }
 
     private fun fetchCurrentRelease() {
@@ -88,6 +88,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     }
 
     public fun refresh() {
+        setPackageName()
         setInstalledApplicationVersion()
         fetchCurrentRelease()
     }
@@ -130,12 +131,13 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     }
 
     private fun updateDatabase() {
-        setInstalledApplicationVersion()
         apkIcon.value = apk.iconURL
         apkLink.value = apk.releaseLink
         apkName.value = deriveAppName()
         apkVersion.value = apk.applicationVersionName
         apkUpdate.value = apk.toUpdate
+        setPackageName()
+        setInstalledApplicationVersion()
         scope.launch { database.update(apk) }
     }
 
@@ -363,18 +365,31 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         requestQueue.add(stringRequest)
     }
 
-    private fun setInstalledApplicationVersion() {
+    private fun setPackageName() {
         val name = apkName.value
-        Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$name")
+        Log.d(TAG_DEBUG, "setPackageName::${deriveAppName()}::$name")
         name?.let {
-            val version = Utils.getAppVersionByName(context, it)
-            Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$name -> $version")
+            val packageName = Utils.getAppPackageName(context, it)
+            Log.d(TAG_DEBUG, ":setPackageName:$name -> $packageName")
+            if (apk.applicationPackageName != packageName) {
+                apk.applicationPackageName = packageName
+                updateDatabase()
+            }
+        }
+    }
+
+    private fun setInstalledApplicationVersion() {
+        val packageName = apk.applicationPackageName
+        Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$packageName")
+        packageName?.let {
+            val version = Utils.getAppVersion(context, it)
+            Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$packageName -> $version")
             val versionName = version?.name
             val versionCode = version?.code
             var update = false
             // TODO: Check if the new version is actually newer
             if (apk.applicationVersionCode != versionCode) {
-                Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$name -> UPDATE DETECTED")
+                Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$packageName -> UPDATE DETECTED")
                 apk.applicationVersionCode = versionCode
                 apk.toUpdate = false
                 update = true
