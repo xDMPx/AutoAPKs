@@ -2,18 +2,19 @@ package com.xdmpx.autoapks
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,11 +24,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
+import coil.compose.AsyncImage
 import com.android.volley.Request
 import com.android.volley.RequestQueue
-import com.android.volley.toolbox.ImageRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -41,7 +43,7 @@ import kotlinx.coroutines.launch
 class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) {
     private val TAG_DEBUG = "GitHubAPK"
     private var database: GitHubAPKDao
-    private var iconBitmap: MutableState<Bitmap?> = mutableStateOf(null)
+    private var apkIcon: MutableState<String?> = mutableStateOf(apk.iconURL)
     private var apkLink: MutableState<String?> = mutableStateOf(apk.releaseLink)
     private var apkVersion: MutableState<String?> = mutableStateOf(apk.applicationVersionName)
     private var apkUpdate: MutableState<Boolean?> = mutableStateOf(apk.toUpdate)
@@ -129,6 +131,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
 
     private fun updateDatabase() {
         setInstalledApplicationVersion()
+        apkIcon.value = apk.iconURL
         apkLink.value = apk.releaseLink
         apkName.value = deriveAppName()
         apkVersion.value = apk.applicationVersionName
@@ -153,7 +156,6 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
                 updateDatabase()
             }
 
-            requestIcon()
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestMipmaphdpi::ERROR::$requestUrl -> ${error.message}"
@@ -169,22 +171,6 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         }
         requestQueue.add(treeInfoRequest)
     }
-
-    private fun requestIcon() {
-        val requestUrl = apk.iconURL
-
-        val iconRequest = ImageRequest(requestUrl, { response ->
-            Log.d(TAG_DEBUG, "requestIcon::$requestUrl -> $response")
-            iconBitmap.value = response
-        }, 0, 0, null, null, { error ->
-            Log.d(
-                TAG_DEBUG, "requestIcon::ERROR::$requestUrl -> ${error.message}"
-            )
-            // TODO: Handle error
-        })
-        requestQueue.add(iconRequest)
-    }
-
 
     private enum class GradleType {
         KTS, GRADLE
@@ -322,7 +308,8 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     private fun requestApplicationNameManifest() {
         val repository = apk.repository
         val branchName = apk.repositoryDefaultBranch
-        val requestUrl = "https://github.com/$repository/raw/$branchName/app/src/main/AndroidManifest.xml"
+        val requestUrl =
+            "https://github.com/$repository/raw/$branchName/app/src/main/AndroidManifest.xml"
 
         Log.d(TAG_DEBUG, "requestApplicationNameManifest::$requestUrl")
         val tagsRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
@@ -405,7 +392,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
 
     @Composable
     fun ApkCard(modifier: Modifier = Modifier) {
-        val iconBitmap by remember { iconBitmap }
+        val apkIcon by remember { apkIcon }
         val apkLink by remember { apkLink }
         val apkName by remember { apkName }
         val apkVersion by remember { apkVersion }
@@ -423,9 +410,14 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
             ) {
                 Text(apk.repository, modifier)
                 apkName?.let { Text(it, modifier) }
-                iconBitmap?.let {
-                    Image(
-                        bitmap = it.asImageBitmap(), contentDescription = "", modifier
+                Spacer(modifier = modifier.size(5.dp))
+                apkIcon?.let {
+                    AsyncImage(
+                        model = apk.iconURL,
+                        contentDescription = null,
+                        modifier = modifier
+                            .clip(CircleShape)
+                            .size(25.dp)
                     )
                 }
             }
