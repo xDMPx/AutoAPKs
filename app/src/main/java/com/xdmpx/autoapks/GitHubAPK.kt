@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -416,7 +417,9 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         Row(
             modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Max)
+                .height(IntrinsicSize.Max).clickable {
+                    apk.applicationPackageName?.let { Utils.openApplicationInfo(context, it) }
+                }
         ) {
             Column(
                 modifier

@@ -45,4 +45,12 @@ object Utils {
         return null
     }
 
+    fun openApplicationInfo(context: Context, packageName: String) {
+        Log.d(TAG_DEBUG, "openApplicationInfo::$packageName")
+        val intent = Intent()
+        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        val uri = Uri.fromParts("package", packageName, null)
+        intent.setData(uri)
+        startActivity(context, intent, null)
+    }
 }
