@@ -371,8 +371,16 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         Log.d(TAG_DEBUG, "setPackageName::${deriveAppName()}::$name")
         name?.let {
             val packageName = Utils.getAppPackageName(context, it)
-            Log.d(TAG_DEBUG, ":setPackageName:$name -> $packageName")
+            Log.d(TAG_DEBUG, "setPackageName:$name -> $packageName")
             if (apk.applicationPackageName != packageName) {
+                if (packageName.isNullOrBlank()) {
+                    Log.d(
+                        TAG_DEBUG,
+                        "setPackageName -> $packageName -> ${packageName.isNullOrBlank()}"
+                    )
+                    apk.applicationVersionCode = null
+                    apk.applicationVersionName = null
+                }
                 apk.applicationPackageName = packageName
                 updateDatabase()
             }
@@ -417,10 +425,10 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         Row(
             modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Max).clickable {
+                .height(IntrinsicSize.Max)
+                .clickable {
                     apk.applicationPackageName?.let { Utils.openApplicationInfo(context, it) }
-                }
-        ) {
+                }) {
             Column(
                 modifier
                     .fillMaxHeight()
