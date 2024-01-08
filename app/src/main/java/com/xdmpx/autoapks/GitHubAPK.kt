@@ -104,11 +104,11 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         Log.d(TAG_DEBUG, "fetchDefaultRepoBranch -> $requestUrl")
         val branchesRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val defaultBranchList =
-                response.substringAfter("<h3 class=\"Box-title\">Default branch</h3>")
-                    .substringBefore("</ul>")
+                response.substringAfter("<h2 class=\"Box-sc-g0xbh4-0 cimJpq TableTitle\" id=\"default\">Default</h2>")
+                    .substringBefore("</table>")
             val defaultBranchName =
-                defaultBranchList.substringAfter("class=\"branch-name").substringAfter(">")
-                    .substringBefore("</a>")
+                defaultBranchList.substringAfter("class=\"BranchName").substringAfter("<div title=\"").substringAfter(">")
+                    .substringBefore("</div></a>")
             Log.d(TAG_DEBUG, "fetchDefaultRepoBranch::$requestUrl -> $defaultBranchName ")
             onResult(defaultBranchName)
         }, { error ->
