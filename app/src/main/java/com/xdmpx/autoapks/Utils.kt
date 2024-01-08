@@ -53,4 +53,13 @@ object Utils {
         intent.setData(uri)
         startActivity(context, intent, null)
     }
+
+    fun uninstallApplication(context: Context, packageName: String) {
+        Log.d(TAG_DEBUG, "uninstallApplication::$packageName")
+        val intent = Intent()
+        intent.setAction(Intent.ACTION_DELETE)
+        val uri = Uri.fromParts("package", packageName, null)
+        intent.setData(uri)
+        startActivity(context, intent, null)
+    }
 }

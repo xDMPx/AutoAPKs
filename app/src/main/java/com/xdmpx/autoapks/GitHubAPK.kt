@@ -4,7 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -26,6 +27,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import coil.compose.AsyncImage
@@ -414,6 +417,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         }
     }
 
+    @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun ApkCard(modifier: Modifier = Modifier) {
         val apkIcon by remember { apkIcon }
@@ -422,13 +426,21 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         val apkVersion by remember { apkVersion }
         val apkUpdate by remember { apkUpdate }
 
+        val haptics = LocalHapticFeedback.current
+
         Row(
             modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Max)
-                .clickable {
+                .combinedClickable(onClick = {
                     apk.applicationPackageName?.let { Utils.openApplicationInfo(context, it) }
-                }) {
+                }, onLongClick = {
+                    apk.applicationPackageName?.let {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        Utils.uninstallApplication(context, it)
+                    }
+                })
+        ) {
             Column(
                 modifier
                     .fillMaxHeight()
