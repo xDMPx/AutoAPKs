@@ -62,4 +62,16 @@ object Utils {
         intent.setData(uri)
         startActivity(context, intent, null)
     }
+
+    fun userInputToAPKRepository(userInput: String): String? {
+        Log.d(TAG_DEBUG, "userInputToAPKRepository::$userInput")
+        if (userInput.contains('/')) {
+            var repositoryStrStart =
+                userInput.substring(0,userInput.lastIndexOf('/')).lastIndexOf('/')
+            repositoryStrStart = if (repositoryStrStart > 0) repositoryStrStart+1 else 0
+            Log.d(TAG_DEBUG, "userInputToAPKRepository::$userInput -> ${userInput.substring(repositoryStrStart)}")
+            return userInput.substring(repositoryStrStart)
+        }
+        return null
+    }
 }

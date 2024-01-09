@@ -160,7 +160,7 @@ class MainActivity : ComponentActivity() {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .height(300.dp)
                     .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
             ) {
@@ -173,7 +173,7 @@ class MainActivity : ComponentActivity() {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         OutlinedTextField(value = userInput,
                             onValueChange = { userInput = it },
-                            label = { Text("Repository") })
+                            label = { Text("Repository URL") })
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center,
@@ -186,7 +186,8 @@ class MainActivity : ComponentActivity() {
                             }
                             TextButton(
                                 onClick = {
-                                    onAddRequest(userInput)
+                                    Utils.userInputToAPKRepository(userInput)
+                                        ?.let { onAddRequest(it) }
                                     onDismissRequest()
                                 },
                                 modifier = Modifier.padding(8.dp),
