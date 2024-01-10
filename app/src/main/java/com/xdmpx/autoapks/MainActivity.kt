@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -103,16 +105,15 @@ class MainActivity : ComponentActivity() {
     @Preview
     fun Main(modifier: Modifier = Modifier) {
         val apks = remember { apks }
-        val apksColumnWeight = 0.80f
-        val addGitHubAPKWeight = 0.175f
+        val apksColumnWeight = 0.83f
 
         Column(modifier) {
-            Column(
+            LazyColumn(
                 modifier
                     .fillMaxSize()
                     .weight(apksColumnWeight)
             ) {
-                for (apk in apks) {
+                items(apks) { apk ->
                     Spacer(modifier = Modifier.size(10.dp))
                     apk.ApkCard(modifier)
                 }
@@ -121,14 +122,9 @@ class MainActivity : ComponentActivity() {
                 Alignment.BottomCenter,
                 modifier
                     .fillMaxSize()
-                    .weight(addGitHubAPKWeight)
+                    .weight(1f - apksColumnWeight)
+                    .padding(16.dp)
             )
-            Spacer(
-                modifier = modifier
-                    .fillMaxSize()
-                    .weight(1f - apksColumnWeight - addGitHubAPKWeight)
-            )
-
         }
     }
 
@@ -173,7 +169,8 @@ class MainActivity : ComponentActivity() {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Box(
                             modifier = Modifier
-                                .fillMaxSize(),
+                                .fillMaxSize()
+                                .weight(0.8f),
                             contentAlignment = Alignment.Center
                         ) {
                             OutlinedTextField(
@@ -184,7 +181,8 @@ class MainActivity : ComponentActivity() {
                         }
                         Row(
                             modifier = Modifier
-                                .fillMaxWidth(),
+                                .fillMaxWidth()
+                                .weight(0.2f),
                             horizontalArrangement = Arrangement.Center,
                         ) {
                             TextButton(
