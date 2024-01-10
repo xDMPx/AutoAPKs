@@ -171,11 +171,20 @@ class MainActivity : ComponentActivity() {
                     contentAlignment = Alignment.Center
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedTextField(value = userInput,
-                            onValueChange = { userInput = it },
-                            label = { Text("Repository URL") })
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            OutlinedTextField(
+                                value = userInput,
+                                onValueChange = { userInput = it },
+                                label = { Text("Repository URL") },
+                            )
+                        }
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center,
                         ) {
                             TextButton(
