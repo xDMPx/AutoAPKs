@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,8 +28,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import coil.compose.AsyncImage
@@ -36,10 +43,10 @@ import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity
+import com.xdmpx.autoapks.ui.theme.getColorSchemeEx
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -58,7 +65,6 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     private val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
 
     init {
-        Log.d(TAG_DEBUG, "hash ${requestQueue.hashCode()}")
         database = GitHubAPKDatabase.getInstance(context).gitHubAPKDatabase
         if (apk.repositoryDefaultBranch.isNullOrBlank()) {
             fetchDefaultRepoBranch {
@@ -105,9 +111,8 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
             val defaultBranchList =
                 response.substringAfter("<h2 class=\"Box-sc-g0xbh4-0 cimJpq TableTitle\" id=\"default\">Default</h2>")
                     .substringBefore("</table>")
-            val defaultBranchName =
-                defaultBranchList.substringAfter("class=\"BranchName").substringAfter("<div title=\"").substringAfter(">")
-                    .substringBefore("</div></a>")
+            val defaultBranchName = defaultBranchList.substringAfter("class=\"BranchName")
+                .substringAfter("<div title=\"").substringAfter(">").substringBefore("</div></a>")
             Log.d(TAG_DEBUG, "fetchDefaultRepoBranch::$requestUrl -> $defaultBranchName ")
             onResult(defaultBranchName)
         }, { error ->
@@ -445,7 +450,8 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
                     .fillMaxHeight()
                     .weight(0.75f)
             ) {
-                Text(apk.repository, modifier)
+                val url = "https://github.com/${apk.repository}"
+                AnnotatedClickableText(apk.repository, url)
                 apkName?.let { Text(it, modifier) }
                 Spacer(modifier = modifier.size(5.dp))
                 apkIcon?.let {
@@ -505,7 +511,6 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         }
     }
 
-    /*
     @Composable
     fun AnnotatedClickableText(text: String, url: String, modifier: Modifier = Modifier) {
         val annotatedText = buildAnnotatedString {
@@ -514,7 +519,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
             )
             withStyle(
                 style = SpanStyle(
-                    color = Color.Blue,
+                    color = getColorSchemeEx().annotatedText,
                     fontWeight = FontWeight.Bold,
                     textDecoration = TextDecoration.Underline
                 )
@@ -534,6 +539,5 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
         }, modifier = modifier)
 
     }
-    */
 
 }
