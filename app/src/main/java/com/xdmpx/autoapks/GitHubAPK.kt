@@ -55,11 +55,10 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     private var recomposed = 0
     private val scope = CoroutineScope(Dispatchers.IO)
 
-    private var requestQueue: RequestQueue = Volley.newRequestQueue(
-        context
-    )
+    private val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
 
     init {
+        Log.d(TAG_DEBUG, "hash ${requestQueue.hashCode()}")
         database = GitHubAPKDatabase.getInstance(context).gitHubAPKDatabase
         if (apk.repositoryDefaultBranch.isNullOrBlank()) {
             fetchDefaultRepoBranch {
