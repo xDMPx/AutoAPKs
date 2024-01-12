@@ -2,6 +2,7 @@ package com.xdmpx.autoapks
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -193,8 +194,21 @@ class MainActivity : ComponentActivity() {
                             }
                             TextButton(
                                 onClick = {
-                                    Utils.userInputToAPKRepository(userInput)
-                                        ?.let { onAddRequest(it) }
+                                    Utils.userInputToAPKRepository(userInput)?.let { repo ->
+                                        GitHubRepoFetcher.validateAndroidAPKRepository(
+                                            repo, this@MainActivity
+                                        ) {
+                                            if (it) {
+                                                onAddRequest(repo)
+                                            } else {
+                                                Toast.makeText(
+                                                    this@MainActivity,
+                                                    "Invalid Android APP Repository",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                    }
                                     onDismissRequest()
                                 },
                                 modifier = Modifier.padding(8.dp),

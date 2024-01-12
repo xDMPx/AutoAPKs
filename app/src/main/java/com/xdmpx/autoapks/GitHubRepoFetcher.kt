@@ -6,7 +6,6 @@ import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
-import java.util.zip.ZipEntry
 
 object GitHubRepoFetcher {
     val TAG_DEBUG = "GitHubRepoFetcher"
@@ -222,7 +221,7 @@ object GitHubRepoFetcher {
             "https://github.com/$repository/raw/$branchName/app/src/main/AndroidManifest.xml"
 
         Log.d(TAG_DEBUG, "requestApplicationNameManifest::$requestUrl")
-        val tagsRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
+        val manifestRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val application = response.substringAfter("<application").substringBefore(">")
             if ("android:name=\"" in application) {
                 val name = application.substringAfter("android:name=\"").substringBefore("\"")
@@ -242,7 +241,7 @@ object GitHubRepoFetcher {
             requestApplicationName(repository, branchName, context, AppNameSource.STRINGS, onResult)
             // TODO: Handle error
         })
-        requestQueue.add(tagsRequest)
+        requestQueue.add(manifestRequest)
     }
 
     private fun requestApplicationNameStrings(
@@ -270,6 +269,23 @@ object GitHubRepoFetcher {
             // TODO: Handle error
         })
         requestQueue.add(stringRequest)
+    }
+
+    fun validateAndroidAPKRepository(
+        repository: String, context: Context, onResult: (valid: Boolean) -> Unit
+    ) {
+        Log.d(TAG_DEBUG, "validateAndroidAPKRepository::$repository")
+        fetchDefaultRepoBranch(repository, context) { branchName ->
+            val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
+            val requestUrl =
+                "https://github.com/$repository/raw/$branchName/app/src/main/AndroidManifest.xml"
+            val manifestRequest = StringRequest(Request.Method.GET, requestUrl, { _ ->
+                onResult(true)
+            }, { _ ->
+                onResult(false)
+            })
+            requestQueue.add(manifestRequest)
+        }
     }
 
 }
