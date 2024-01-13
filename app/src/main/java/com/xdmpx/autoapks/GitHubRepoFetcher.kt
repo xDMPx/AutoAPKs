@@ -10,6 +10,26 @@ import com.android.volley.toolbox.StringRequest
 object GitHubRepoFetcher {
     val TAG_DEBUG = "GitHubRepoFetcher"
 
+    private fun String?.substringAfterOrNull(delimiter: String): String? {
+        this?.let { str ->
+            str.substringAfter(delimiter, missingDelimiterValue = "").let {
+                it.ifBlank { return null }
+                return it
+            }
+        }
+        return null
+    }
+
+    private fun String?.substringBeforeOrNull(delimiter: String): String? {
+        this?.let { str ->
+            str.substringBefore(delimiter, missingDelimiterValue = "").let {
+                it.ifBlank { return null }
+                return it
+            }
+        }
+        return null
+    }
+
     fun fetchDefaultRepoBranch(
         repository: String, context: Context, onResult: (branchName: String) -> Unit
     ) {
@@ -19,13 +39,13 @@ object GitHubRepoFetcher {
         Log.d(TAG_DEBUG, "fetchDefaultRepoBranch -> $requestUrl")
         val branchesRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val defaultBranchList =
-                response.substringAfter("<h2 class=\"Box-sc-g0xbh4-0 cimJpq TableTitle\" id=\"default\">Default</h2>")
-                    .substringBefore("</table>")
-            val defaultBranchName = defaultBranchList.substringAfter("class=\"BranchName")
-                .substringAfter("<div title=\"").substringAfter(">").substringBefore("</div></a>")
+                response.substringAfterOrNull(">Default<").substringBeforeOrNull("</table>")
+            val defaultBranchName = defaultBranchList.substringAfterOrNull("class=\"BranchName")
+                .substringAfterOrNull("<div title=\"").substringAfterOrNull(">")
+                .substringBeforeOrNull("</div></a>")
 
-            Log.d(TAG_DEBUG, "fetchDefaultRepoBranch::$requestUrl -> $defaultBranchName ")
-            onResult(defaultBranchName)
+            Log.d(TAG_DEBUG, "fetchDefaultRepoBranch::$requestUrl -> $defaultBranchName")
+            defaultBranchName?.let { onResult(it) }
         }, { error ->
             Log.d(
                 TAG_DEBUG, "fetchDefaultRepoBranch::ERROR::$requestUrl -> ${error.message}"
@@ -47,15 +67,19 @@ object GitHubRepoFetcher {
         Log.d(TAG_DEBUG, "requestLatestRelease::$requestUrl")
         val releaseRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val releaseCommit =
-                response.substringAfter("data-hovercard-type=\"commit\" data-hovercard-url=\"")
-                    .substringBefore("\"")
-            Log.d(TAG_DEBUG, "requestLatestRelease::$requestUrl -> $releaseCommit")
+                response.substringAfterOrNull("data-hovercard-type=\"commit\" data-hovercard-url=\"")
+                    .substringBeforeOrNull("\"")
+            val releaseTag = response.substringAfterOrNull("aria-label=\"Tag\"")
+                .substringAfterOrNull("<span class=\"ml-1\">").substringBeforeOrNull("</span>")
+                ?.trim()
 
-            val releaseTag = response.substringAfter("aria-label=\"Tag\"")
-                .substringAfter("<span class=\"ml-1\">").substringBefore("</span>").trim()
-            Log.d(TAG_DEBUG, "requestLatestRelease::$requestUrl -> $releaseTag")
-
-            onResult(releaseCommit, releaseTag)
+            releaseCommit?.let { releaseCommit ->
+                Log.d(TAG_DEBUG, "requestLatestRelease::$requestUrl -> $releaseCommit")
+                Log.d(TAG_DEBUG, "requestLatestRelease::$requestUrl -> $releaseTag")
+                releaseTag?.let { releaseTag ->
+                    onResult(releaseCommit, releaseTag)
+                }
+            }
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestLatestRelease::ERROR::$requestUrl -> ${error.message}"
@@ -74,11 +98,12 @@ object GitHubRepoFetcher {
 
         Log.d(TAG_DEBUG, "requestLatestReleaseAssets::$requestUrl")
         val assetsRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
-            val apkHref = response.substringBefore(".apk\"").substringAfter("href=\"")
-            val apkURL = "https://github.com/$apkHref.apk"
-
-            Log.d(TAG_DEBUG, "requestLatestReleaseAssets::$requestUrl -> $apkURL")
-            onResult(apkURL)
+            val apkHref = response.substringBeforeOrNull(".apk\"").substringAfterOrNull("href=\"")
+            apkHref?.let { apkHref ->
+                val apkURL = "https://github.com/$apkHref.apk"
+                Log.d(TAG_DEBUG, "requestLatestReleaseAssets::$requestUrl -> $apkURL")
+                onResult(apkURL)
+            }
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestLatestReleaseAssets::ERROR::$requestUrl -> ${error.message}"
@@ -133,7 +158,7 @@ object GitHubRepoFetcher {
         branchName: String,
         context: Context,
         buildType: GradleType = GradleType.KTS,
-        onResult: (iconUrl: String) -> Unit,
+        onResult: (applicationId: String) -> Unit,
     ) {
         if (buildType == GradleType.KTS) {
             requestApplicationIdGradleKTS(repository, branchName, context, onResult)
@@ -171,16 +196,22 @@ object GitHubRepoFetcher {
 
         Log.d(TAG_DEBUG, "requestApplicationIdGradleKTS::$requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
-            var applicationID = response.substringAfter("applicationId = ").substringBefore("\n")
-            applicationID = applicationID.trim('\'', '\"')
-
-            Log.d(TAG_DEBUG, "requestApplicationIdGradleKTS::$requestUrl -> $applicationID")
-            onResult(applicationID)
+            val applicationID =
+                response.substringAfterOrNull("applicationId = ").substringBeforeOrNull("\n")
+            applicationID?.let { it ->
+                val applicationID = it.trim('\'', '\"')
+                Log.d(
+                    TAG_DEBUG, "requestApplicationIdGradleKTS::$requestUrl -> $applicationID"
+                )
+                onResult(applicationID)
+            }
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestApplicationIdGradleKTS::ERROR::$requestUrl -> ${error.message}"
             )
-            requestApplicationId(repository, branchName, context, GradleType.GRADLE, onResult)
+            requestApplicationId(
+                repository, branchName, context, GradleType.GRADLE, onResult
+            )
             // TODO: Handle error
         })
 
@@ -198,11 +229,17 @@ object GitHubRepoFetcher {
 
         Log.d(TAG_DEBUG, "requestApplicationIdGradle::$requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
-            var applicationID = response.substringAfter("applicationId ").substringBefore("\n")
-            applicationID = applicationID.trim('\'', '\"')
+            val applicationID =
+                response.substringAfterOrNull("applicationId ").substringBeforeOrNull("\n")
+            applicationID?.let { it ->
+                val applicationID = it.trim('\'', '\"')
+                Log.d(
+                    TAG_DEBUG, "requestApplicationIdGradle::$requestUrl -> $applicationID"
+                )
+                onResult(applicationID)
+            }
 
-            Log.d(TAG_DEBUG, "requestApplicationIdGradle::$requestUrl -> $applicationID")
-            onResult(applicationID)
+
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestApplicationIdGradle::ERROR::$requestUrl -> ${error.message}"
@@ -222,23 +259,30 @@ object GitHubRepoFetcher {
 
         Log.d(TAG_DEBUG, "requestApplicationNameManifest::$requestUrl")
         val manifestRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
-            val application = response.substringAfter("<application").substringBefore(">")
-            if ("android:name=\"" in application) {
-                val name = application.substringAfter("android:name=\"").substringBefore("\"")
+            val application =
+                response.substringAfterOrNull("<application").substringBeforeOrNull(">")
+            application?.let { application ->
+                if ("android:name=\"" in application) {
+                    val name = application.substringAfter("android:name=\"").substringBefore("\"")
 
-                Log.d(TAG_DEBUG, "requestApplicationNameManifest::$requestUrl -> $name")
-                onResult(name)
-            } else {
-                Log.d(TAG_DEBUG, "requestApplicationNameManifest::$requestUrl -> NO ANDROID:NAME")
-                requestApplicationName(
-                    repository, branchName, context, AppNameSource.STRINGS, onResult
-                )
+                    Log.d(TAG_DEBUG, "requestApplicationNameManifest::$requestUrl -> $name")
+                    onResult(name)
+                } else {
+                    Log.d(
+                        TAG_DEBUG, "requestApplicationNameManifest::$requestUrl -> NO ANDROID:NAME"
+                    )
+                    requestApplicationName(
+                        repository, branchName, context, AppNameSource.STRINGS, onResult
+                    )
+                }
             }
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestApplicationNameManifest::ERROR::$requestUrl -> ${error.message}"
             )
-            requestApplicationName(repository, branchName, context, AppNameSource.STRINGS, onResult)
+            requestApplicationName(
+                repository, branchName, context, AppNameSource.STRINGS, onResult
+            )
             // TODO: Handle error
         })
         requestQueue.add(manifestRequest)
@@ -254,13 +298,16 @@ object GitHubRepoFetcher {
         Log.d(TAG_DEBUG, "requestApplicationNameStrings::$requestUrl")
         val stringRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             if ("app_name" in response) {
-                val name = response.substringAfter("<string name=\"app_name").substringAfter("\">")
-                    .substringBefore("</")
-
-                Log.d(TAG_DEBUG, "requestApplicationNameStrings::$requestUrl -> $name")
-                onResult(".$name")
+                val name = response.substringAfterOrNull("<string name=\"app_name")
+                    .substringAfterOrNull("\">").substringBeforeOrNull("</")
+                name?.let { name ->
+                    Log.d(TAG_DEBUG, "requestApplicationNameStrings::$requestUrl -> $name")
+                    onResult(".$name")
+                }
             } else {
-                Log.d(TAG_DEBUG, "requestApplicationNameStrings::$requestUrl -> NO APP_NAME")
+                Log.d(
+                    TAG_DEBUG, "requestApplicationNameStrings::$requestUrl -> NO APP_NAME"
+                )
             }
         }, { error ->
             Log.d(
