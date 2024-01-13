@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
@@ -216,12 +217,6 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun ApkCard(modifier: Modifier = Modifier) {
-        val apkIcon by remember { apkIcon }
-        val apkLink by remember { apkLink }
-        val apkName by remember { apkName }
-        val apkVersion by remember { apkVersion }
-        val apkUpdate by remember { apkUpdate }
-
         val haptics = LocalHapticFeedback.current
 
         Row(
@@ -237,50 +232,93 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
                     }
                 })
         ) {
-            Column(
-                modifier
-                    .fillMaxHeight()
-                    .weight(0.75f)
-            ) {
-                val url = "https://github.com/${apk.repository}"
-                AnnotatedClickableText(apk.repository, url)
-                apkName?.let { Text(it, modifier) }
-                Spacer(modifier = modifier.size(5.dp))
-                apkIcon?.let {
-                    AsyncImage(
-                        model = apk.iconURL,
-                        contentDescription = null,
-                        modifier = modifier
-                            .clip(CircleShape)
-                            .size(25.dp)
-                    )
-                }
-            }
-            Box(Modifier.weight(0.25f)) {
-                if (apkVersion.isNullOrEmpty()) {
-                    Box(
-                        contentAlignment = Alignment.CenterEnd, modifier = modifier.fillMaxSize()
-                    ) {
-                        apkLink?.let { InstallButton(it, modifier) }
-                    }
-                } else if (apkUpdate == true) {
-                    Box(
-                        contentAlignment = Alignment.CenterEnd, modifier = modifier.fillMaxSize()
-                    ) {
-                        apkLink?.let { UpdateButton(it, modifier) }
-                    }
-                } else {
-                    Box(
-                        contentAlignment = Alignment.Center, modifier = modifier.fillMaxSize()
-                    ) {
-                        apkVersion?.let { Text(it, modifier) }
-                    }
-                }
-            }
+            ApkInfo(modifier.weight(0.75f))
+            ApkVersionControl(modifier.weight(0.25f))
         }
 
         recomposed++
         Log.d(TAG_DEBUG, "$recomposed")
+    }
+
+    @Composable
+    fun ApkInfo(modifier: Modifier = Modifier) {
+
+        Column(
+            modifier.fillMaxSize()
+        ) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Max)
+            ) {
+                ApkIcon()
+                ApkInfoData()
+            }
+        }
+    }
+
+    @Composable
+    fun ApkVersionControl(modifier: Modifier = Modifier) {
+        val apkLink by remember { apkLink }
+        val apkVersion by remember { apkVersion }
+        val apkUpdate by remember { apkUpdate }
+
+        Box(
+            modifier.fillMaxSize()
+        ) {
+            if (apkVersion.isNullOrEmpty()) {
+                Box(
+                    contentAlignment = Alignment.CenterEnd, modifier = Modifier.fillMaxSize()
+                ) {
+                    apkLink?.let { InstallButton(it) }
+                }
+            } else if (apkUpdate == true) {
+                Box(
+                    contentAlignment = Alignment.CenterEnd, modifier = Modifier.fillMaxSize()
+                ) {
+                    apkLink?.let { UpdateButton(it) }
+                }
+            } else {
+                Box(
+                    contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()
+                ) {
+                    apkVersion?.let { Text(it) }
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun ApkIcon(modifier: Modifier = Modifier) {
+        val apkIcon by remember { apkIcon }
+
+        Box(
+            contentAlignment = Alignment.Center, modifier = modifier
+                .fillMaxHeight()
+                .padding(5.dp)
+        ) {
+            AsyncImage(
+                model = apkIcon,
+                contentDescription = null,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .size(30.dp)
+            )
+        }
+    }
+
+    @Composable
+    fun ApkInfoData(modifier: Modifier = Modifier) {
+        val apkName by remember { apkName }
+
+        Box(modifier = modifier.fillMaxHeight()) {
+            Column {
+                val url = "https://github.com/${apk.repository}"
+                AnnotatedClickableText(apk.repository, url)
+                apkName?.let { Text(it, Modifier) }
+            }
+
+        }
     }
 
     @Composable
