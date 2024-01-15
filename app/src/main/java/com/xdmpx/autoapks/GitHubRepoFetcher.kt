@@ -189,7 +189,8 @@ object GitHubRepoFetcher {
         repository: String,
         branchName: String,
         context: Context,
-        onResult: (applicationId: String) -> Unit
+        onResult: (applicationId: String) -> Unit,
+        source: String = "applicationId",
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
         val requestUrl = "https://github.com/$repository/raw/$branchName/app/build.gradle.kts"
@@ -197,13 +198,17 @@ object GitHubRepoFetcher {
         Log.d(TAG_DEBUG, "requestApplicationIdGradleKTS::$requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val applicationID =
-                response.substringAfterOrNull("applicationId = ").substringBeforeOrNull("\n")
+                response.substringAfterOrNull("$source = ").substringBeforeOrNull("\n")
             applicationID?.let { it ->
                 val applicationID = it.trim('\'', '\"')
-                Log.d(
-                    TAG_DEBUG, "requestApplicationIdGradleKTS::$requestUrl -> $applicationID"
-                )
-                onResult(applicationID)
+                if (applicationID != it){
+                    Log.d(
+                        TAG_DEBUG, "requestApplicationIdGradleKTS::$requestUrl -> $applicationID"
+                    )
+                    onResult(applicationID)
+                } else {
+                   requestApplicationIdGradleKTS(repository, branchName, context, onResult, "namespace")
+                }
             }
         }, { error ->
             Log.d(
@@ -222,7 +227,8 @@ object GitHubRepoFetcher {
         repository: String,
         branchName: String,
         context: Context,
-        onResult: (applicationID: String) -> Unit
+        onResult: (applicationID: String) -> Unit,
+        source: String = "applicationId",
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
         val requestUrl = "https://github.com/$repository/raw/$branchName/app/build.gradle"
@@ -230,13 +236,17 @@ object GitHubRepoFetcher {
         Log.d(TAG_DEBUG, "requestApplicationIdGradle::$requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val applicationID =
-                response.substringAfterOrNull("applicationId ").substringBeforeOrNull("\n")
+                response.substringAfterOrNull("$source ").substringBeforeOrNull("\n")
             applicationID?.let { it ->
                 val applicationID = it.trim('\'', '\"')
-                Log.d(
-                    TAG_DEBUG, "requestApplicationIdGradle::$requestUrl -> $applicationID"
-                )
-                onResult(applicationID)
+                if (applicationID != it) {
+                    Log.d(
+                        TAG_DEBUG, "requestApplicationIdGradle::$requestUrl -> $applicationID"
+                    )
+                    onResult(applicationID)
+                } else{
+                    requestApplicationIdGradle(repository, branchName, context, onResult, "namespace")
+                }
             }
 
 
