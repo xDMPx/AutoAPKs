@@ -34,7 +34,7 @@ object Utils {
         val installedApplications = packageManager.getInstalledPackages(0)
 
         for (appInfo in installedApplications) {
-            if (appInfo.applicationInfo.name.isNullOrBlank()) {
+            if (appInfo.applicationInfo.name.isNullOrBlank() && appInfo.packageName.isNullOrBlank()) {
                 continue
             }
             if (appInfo.applicationInfo.name == appName || appInfo.packageName == appName) {

@@ -152,6 +152,9 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
                 return "$it$name"
             }
         }
+        apk.applicationId?.let {
+            return it
+        }
         return null
     }
 
