@@ -313,10 +313,68 @@ object GitHubRepoFetcher {
         }
     }
 
-    fun requestIconName(
+
+    fun requestIcon(
         repository: String,
         branchName: String,
         context: Context,
+        iconFolder: String? = null,
+        iconName: String? = null,
+        onResult: (iconUrl: String) -> Unit
+    ) {
+        when {
+            (iconFolder == null) -> requestIconFolder(repository, branchName, context, onResult)
+            (iconName == null) -> requestIconName(
+                repository, branchName, context, iconFolder, onResult
+            )
+
+            else -> requestIconUrl(repository, branchName, context, iconFolder, iconName, onResult)
+        }
+    }
+
+    private fun requestIconFolder(
+        repository: String,
+        branchName: String,
+        context: Context,
+        onResult: (iconUrl: String) -> Unit
+    ) {
+        val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
+        val requestUrl =
+            "https://github.com/$repository/tree-commit-info/$branchName/app/src/main/res"
+
+        Log.d(TAG_DEBUG, "requestIconFolder::$repository -> $requestUrl")
+        val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->
+            val length = response.length()
+            var folderName: String? = null
+            for (i in 0 until length) {
+                if (response.names()?.get(i).toString().startsWith("mipmap-")) {
+                    folderName = response.names()?.get(i).toString()
+                }
+            }
+
+            Log.d(TAG_DEBUG, "requestIconFolder::$requestUrl -> $folderName")
+            requestIcon(repository, branchName, context, folderName, null, onResult)
+        }, { error ->
+            Log.d(
+                TAG_DEBUG, "requestIconFolder::ERROR::$requestUrl -> ${error.message}"
+            )
+            // TODO: Handle error
+        }) {
+            override fun getHeaders(): Map<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Accept"] = "application/json"
+                return headers
+            }
+
+        }
+        requestQueue.add(treeInfoRequest)
+    }
+
+    private fun requestIconName(
+        repository: String,
+        branchName: String,
+        context: Context,
+        iconFolder: String,
         onResult: (iconUrl: String) -> Unit
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
@@ -334,12 +392,12 @@ object GitHubRepoFetcher {
                     if ((iconLocation != null) && ('$' !in iconLocation)) {
                         iconLocation = iconLocation.trim('"', '\'', '@')
                     } else {
-                        iconLocation = null
+                        iconLocation = ""
                     }
-                    val iconName = iconLocation?.substringAfterLast("/")
+                    val iconName = iconLocation.substringAfterLast("/")
 
                     Log.d(TAG_DEBUG, "requestIconLocation::$requestUrl -> $iconName")
-                    requestIconUrl(repository, branchName, context, iconName, onResult)
+                    requestIcon(repository, branchName, context, iconFolder, iconName, onResult)
                 }
             }
         }, { error ->
@@ -347,7 +405,7 @@ object GitHubRepoFetcher {
                 TAG_DEBUG, "requestIconLocation::ERROR::$requestUrl -> ${error.message}"
             )
             // TODO: Handle error
-            requestIconUrl(repository, branchName, context, null, onResult)
+            requestIcon(repository, branchName, context, iconFolder, "", onResult)
         })
         requestQueue.add(manifestRequest)
     }
@@ -356,16 +414,17 @@ object GitHubRepoFetcher {
         repository: String,
         branchName: String,
         context: Context,
-        iconName: String?,
+        iconFolder: String,
+        iconName: String? = null,
         onResult: (iconUrl: String) -> Unit
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
         val requestUrl: String =
-            "https://github.com/$repository/tree-commit-info/$branchName/app/src/main/res/mipmap-hdpi"
+            "https://github.com/$repository/tree-commit-info/$branchName/app/src/main/res/$iconFolder"
 
-        Log.d(TAG_DEBUG, "requestIconUrl::$repository::$iconName -> $requestUrl")
+        Log.d(TAG_DEBUG, "requestIconUrl::$repository -> $requestUrl")
         val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->
-            var icon = if (iconName.isNullOrBlank()) response.names()?.get(0).toString() else {
+            val icon = if (iconName.isNullOrBlank()) response.names()?.get(0).toString() else {
                 val length = response.length()
                 var name = ""
                 for (i in 0 until length) {
@@ -375,10 +434,8 @@ object GitHubRepoFetcher {
                 }
                 name
             }
-
-            Log.d(TAG_DEBUG, "requestIconUrl::$requestUrl -> $icon")
             val iconUrl =
-                "https://github.com/$repository/raw/$branchName/app/src/main/res/mipmap-hdpi/$icon"
+                "https://github.com/$repository/raw/$branchName/app/src/main/res/$iconFolder/$icon"
 
             Log.d(TAG_DEBUG, "requestIconUrl::$requestUrl -> $iconUrl")
             onResult(iconUrl)
@@ -397,6 +454,5 @@ object GitHubRepoFetcher {
         }
         requestQueue.add(treeInfoRequest)
     }
-
 
 }
