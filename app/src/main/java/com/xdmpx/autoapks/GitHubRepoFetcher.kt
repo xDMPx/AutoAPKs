@@ -113,42 +113,6 @@ object GitHubRepoFetcher {
         requestQueue.add(assetsRequest)
     }
 
-    fun requestMipmaphdpi(
-        repository: String,
-        branchName: String,
-        context: Context,
-        onResult: (iconUrl: String) -> Unit
-    ) {
-        val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
-        val requestUrl =
-            "https://github.com/$repository/tree-commit-info/$branchName/app/src/main/res/mipmap-hdpi"
-
-        Log.d(TAG_DEBUG, "requestMipmaphdpi::$requestUrl")
-        val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->
-            val iconName = response.names()?.get(0).toString()
-            Log.d(TAG_DEBUG, "requestMipmaphdpi::$requestUrl -> $iconName")
-            val iconUrl =
-                "https://github.com/$repository/raw/$branchName/app/src/main/res/mipmap-hdpi/$iconName"
-
-            Log.d(TAG_DEBUG, "requestMipmaphdpi::$requestUrl -> $iconUrl")
-            onResult(iconUrl)
-        }, { error ->
-            Log.d(
-                TAG_DEBUG, "requestMipmaphdpi::ERROR::$requestUrl -> ${error.message}"
-            )
-            // TODO: Handle error
-        }) {
-            override fun getHeaders(): Map<String, String> {
-                val headers = HashMap<String, String>()
-                headers["Accept"] = "application/json"
-                return headers
-            }
-
-        }
-        requestQueue.add(treeInfoRequest)
-    }
-
-
     enum class GradleType {
         KTS, GRADLE
     }
@@ -201,13 +165,15 @@ object GitHubRepoFetcher {
                 response.substringAfterOrNull("$source = ").substringBeforeOrNull("\n")
             applicationID?.let { it ->
                 val applicationID = it.trim('\'', '\"')
-                if (applicationID != it){
+                if (applicationID != it) {
                     Log.d(
                         TAG_DEBUG, "requestApplicationIdGradleKTS::$requestUrl -> $applicationID"
                     )
                     onResult(applicationID)
                 } else {
-                   requestApplicationIdGradleKTS(repository, branchName, context, onResult, "namespace")
+                    requestApplicationIdGradleKTS(
+                        repository, branchName, context, onResult, "namespace"
+                    )
                 }
             }
         }, { error ->
@@ -244,8 +210,10 @@ object GitHubRepoFetcher {
                         TAG_DEBUG, "requestApplicationIdGradle::$requestUrl -> $applicationID"
                     )
                     onResult(applicationID)
-                } else{
-                    requestApplicationIdGradle(repository, branchName, context, onResult, "namespace")
+                } else {
+                    requestApplicationIdGradle(
+                        repository, branchName, context, onResult, "namespace"
+                    )
                 }
             }
 
@@ -344,5 +312,91 @@ object GitHubRepoFetcher {
             requestQueue.add(manifestRequest)
         }
     }
+
+    fun requestIconName(
+        repository: String,
+        branchName: String,
+        context: Context,
+        onResult: (iconUrl: String) -> Unit
+    ) {
+        val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
+        val requestUrl =
+            "https://github.com/$repository/raw/$branchName/app/src/main/AndroidManifest.xml"
+
+        Log.d(TAG_DEBUG, "requestIconLocation::$requestUrl")
+        val manifestRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
+            val application =
+                response.substringAfterOrNull("<application").substringBeforeOrNull(">")
+            application?.let { application ->
+                if ("android:icon=" in application) {
+                    var iconLocation: String? = application.substringAfterOrNull("android:icon=")
+                        ?.substringBeforeOrNull("\n")
+                    if ((iconLocation != null) && ('$' !in iconLocation)) {
+                        iconLocation = iconLocation.trim('"', '\'', '@')
+                    } else {
+                        iconLocation = null
+                    }
+                    val iconName = iconLocation?.substringAfterLast("/")
+
+                    Log.d(TAG_DEBUG, "requestIconLocation::$requestUrl -> $iconName")
+                    requestIconUrl(repository, branchName, context, iconName, onResult)
+                }
+            }
+        }, { error ->
+            Log.d(
+                TAG_DEBUG, "requestIconLocation::ERROR::$requestUrl -> ${error.message}"
+            )
+            // TODO: Handle error
+            requestIconUrl(repository, branchName, context, null, onResult)
+        })
+        requestQueue.add(manifestRequest)
+    }
+
+    fun requestIconUrl(
+        repository: String,
+        branchName: String,
+        context: Context,
+        iconName: String?,
+        onResult: (iconUrl: String) -> Unit
+    ) {
+        val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
+        val requestUrl: String =
+            "https://github.com/$repository/tree-commit-info/$branchName/app/src/main/res/mipmap-hdpi"
+
+        Log.d(TAG_DEBUG, "requestIconUrl::$repository::$iconName -> $requestUrl")
+        val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->
+            var icon = if (iconName.isNullOrBlank()) response.names()?.get(0).toString() else {
+                val length = response.length()
+                var name = ""
+                for (i in 0 until length) {
+                    if (response.names()?.get(i).toString().startsWith(iconName)) {
+                        name = response.names()?.get(i).toString()
+                    }
+                }
+                name
+            }
+
+            Log.d(TAG_DEBUG, "requestIconUrl::$requestUrl -> $icon")
+            val iconUrl =
+                "https://github.com/$repository/raw/$branchName/app/src/main/res/mipmap-hdpi/$icon"
+
+            Log.d(TAG_DEBUG, "requestIconUrl::$requestUrl -> $iconUrl")
+            onResult(iconUrl)
+        }, { error ->
+            Log.d(
+                TAG_DEBUG, "requestIconUrl::ERROR::$requestUrl -> ${error.message}"
+            )
+            // TODO: Handle error
+        }) {
+            override fun getHeaders(): Map<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Accept"] = "application/json"
+                return headers
+            }
+
+        }
+        requestQueue.add(treeInfoRequest)
+    }
+
 
 }

@@ -78,7 +78,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
 
     private fun fetchIcon() {
         apk.repositoryDefaultBranch?.let { branchName ->
-            GitHubRepoFetcher.requestMipmaphdpi(apk.repository, branchName, context) { iconUrl ->
+            GitHubRepoFetcher.requestIconName(apk.repository, branchName, context) { iconUrl ->
                 if (apk.iconURL != iconUrl) {
                     apk.iconURL = iconUrl
                     updateDatabase()
