@@ -170,7 +170,7 @@ object GitHubRepoFetcher {
                         TAG_DEBUG, "requestApplicationIdGradleKTS::$requestUrl -> $applicationID"
                     )
                     onResult(applicationID)
-                } else {
+                } else if (source != "namespace") {
                     requestApplicationIdGradleKTS(
                         repository, branchName, context, onResult, "namespace"
                     )
@@ -210,7 +210,7 @@ object GitHubRepoFetcher {
                         TAG_DEBUG, "requestApplicationIdGradle::$requestUrl -> $applicationID"
                     )
                     onResult(applicationID)
-                } else {
+                } else if (source != "namespace") {
                     requestApplicationIdGradle(
                         repository, branchName, context, onResult, "namespace"
                     )
@@ -428,7 +428,7 @@ object GitHubRepoFetcher {
                 val length = response.length()
                 var name = ""
                 for (i in 0 until length) {
-                    if (response.names()?.get(i).toString().startsWith(iconName)) {
+                    if (response.names()?.get(i).toString().startsWith("$iconName.")) {
                         name = response.names()?.get(i).toString()
                     }
                 }
