@@ -65,12 +65,15 @@ object Utils {
 
     fun userInputToAPKRepository(userInput: String): String? {
         Log.d(TAG_DEBUG, "userInputToAPKRepository::$userInput")
+        var userInput =
+            userInput.substringBefore('#').substringBefore('?').substringAfter("://").trim('/')
+        userInput = if (userInput.contains('.')) userInput.substringAfter('/') else userInput
         if (userInput.contains('/')) {
-            var repositoryStrStart =
-                userInput.substring(0,userInput.lastIndexOf('/')).lastIndexOf('/')
-            repositoryStrStart = if (repositoryStrStart > 0) repositoryStrStart+1 else 0
-            Log.d(TAG_DEBUG, "userInputToAPKRepository::$userInput -> ${userInput.substring(repositoryStrStart)}")
-            return userInput.substring(repositoryStrStart)
+            val repoOwner = userInput.substringBefore('/')
+            val repoName = userInput.substringAfter('/').substringBefore('/')
+            val repository = "$repoOwner/$repoName"
+            Log.d(TAG_DEBUG, "userInputToAPKRepository::$userInput -> $repository")
+            return repository
         }
         return null
     }

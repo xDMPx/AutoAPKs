@@ -194,7 +194,8 @@ class MainActivity : ComponentActivity() {
                             }
                             TextButton(
                                 onClick = {
-                                    Utils.userInputToAPKRepository(userInput)?.let { repo ->
+                                    val repo = Utils.userInputToAPKRepository(userInput)
+                                    repo?.let { repo ->
                                         GitHubRepoFetcher.validateAndroidAPKRepository(
                                             repo, this@MainActivity
                                         ) {
@@ -208,6 +209,14 @@ class MainActivity : ComponentActivity() {
                                                 ).show()
                                             }
                                         }
+
+                                    }
+                                    if (repo.isNullOrBlank()) {
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            "Invalid Android APP Repository",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     }
                                     onDismissRequest()
                                 },

@@ -31,7 +31,10 @@ object GitHubRepoFetcher {
     }
 
     fun fetchDefaultRepoBranch(
-        repository: String, context: Context, onResult: (branchName: String) -> Unit
+        repository: String,
+        context: Context,
+        onError: () -> Unit = {},
+        onResult: (branchName: String) -> Unit
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
         val requestUrl = "https://github.com/$repository/branches"
@@ -50,6 +53,7 @@ object GitHubRepoFetcher {
             Log.d(
                 TAG_DEBUG, "fetchDefaultRepoBranch::ERROR::$requestUrl -> ${error.message}"
             )
+            onError()
             // TODO: Handle error
         })
 
@@ -300,7 +304,9 @@ object GitHubRepoFetcher {
         repository: String, context: Context, onResult: (valid: Boolean) -> Unit
     ) {
         Log.d(TAG_DEBUG, "validateAndroidAPKRepository::$repository")
-        fetchDefaultRepoBranch(repository, context) { branchName ->
+        fetchDefaultRepoBranch(repository, context, onError = {
+            onResult(false)
+        }) { branchName ->
             val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
             val requestUrl =
                 "https://github.com/$repository/raw/$branchName/app/src/main/AndroidManifest.xml"
@@ -410,7 +416,7 @@ object GitHubRepoFetcher {
         requestQueue.add(manifestRequest)
     }
 
-    fun requestIconUrl(
+    private fun requestIconUrl(
         repository: String,
         branchName: String,
         context: Context,
