@@ -1,10 +1,12 @@
 package com.xdmpx.autoapks
 
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,13 +23,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -36,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -45,12 +53,19 @@ import com.xdmpx.autoapks.database.GitHubAPKEntity
 import com.xdmpx.autoapks.ui.theme.AutoAPKsTheme
 import androidx.lifecycle.coroutineScope
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 
 
 class MainActivity : ComponentActivity() {
     private val TAG_DEBUG = "MainActivity"
     private lateinit var database: GitHubAPKDao
     private var apks = mutableStateListOf<GitHubAPK>()
+    private val createDocument =
+        registerForActivityResult(CreateDocument("application/json")) { uri ->
+            if (uri != null) {
+                export(uri)
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,7 +75,11 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    Main()
+                    Scaffold(
+                        topBar = { TopAppBar() },
+                    ) { innerPadding ->
+                        Main(Modifier.padding(innerPadding))
+                    }
                 }
             }
         }
@@ -110,23 +129,39 @@ class MainActivity : ComponentActivity() {
 
         Column(modifier) {
             LazyColumn(
-                modifier
+                Modifier
                     .fillMaxSize()
                     .weight(apksColumnWeight)
             ) {
                 items(apks) { apk ->
                     Spacer(modifier = Modifier.size(10.dp))
-                    apk.ApkCard(modifier)
+                    apk.ApkCard()
                 }
             }
             AddAPKRepository(
                 Alignment.BottomCenter,
-                modifier
+                Modifier
                     .fillMaxSize()
                     .weight(1f - apksColumnWeight)
                     .padding(16.dp)
             )
         }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun TopAppBar() {
+        TopAppBar(colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background,
+            titleContentColor = MaterialTheme.colorScheme.primary,
+        ), title = { Text("AutoAPKs") }, actions = {
+            IconButton(onClick = { createDocument.launch("apks_export.json") }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_output_24),
+                    contentDescription = "Export button"
+                )
+            }
+        })
     }
 
     @Composable
@@ -231,4 +266,21 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun export(uri: Uri) {
+        this.lifecycle.coroutineScope.launch {
+            val repositories = database.getRepositories()
+            val json = JSONArray(repositories)
+            try {
+                contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(json.toString().toByteArray())
+                }
+            } catch (e: Exception) {
+                Toast.makeText(
+                    this@MainActivity, "Error exporting data", Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
 }

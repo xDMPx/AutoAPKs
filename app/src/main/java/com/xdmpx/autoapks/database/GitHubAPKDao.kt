@@ -12,6 +12,9 @@ interface GitHubAPKDao {
     @Query("SELECT * FROM githubapk")
     suspend fun getAll(): List<GitHubAPKEntity>
 
+    @Query("SELECT repository FROM githubapk")
+    suspend fun getRepositories(): List<String>
+
     @Insert
     suspend fun insertAll(vararg githubApks: GitHubAPKEntity)
 
