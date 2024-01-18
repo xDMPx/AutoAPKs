@@ -6,7 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,13 +47,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.coroutineScope
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity
 import com.xdmpx.autoapks.ui.theme.AutoAPKsTheme
-import androidx.lifecycle.coroutineScope
 import kotlinx.coroutines.launch
 import org.json.JSONArray
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 
 class MainActivity : ComponentActivity() {
@@ -61,11 +63,13 @@ class MainActivity : ComponentActivity() {
     private lateinit var database: GitHubAPKDao
     private var apks = mutableStateListOf<GitHubAPK>()
     private val createDocument =
-        registerForActivityResult(CreateDocument("application/json")) { uri ->
-            if (uri != null) {
-                export(uri)
-            }
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+            export(
+                uri
+            )
         }
+    private val openDocument =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> import(uri) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -159,6 +163,12 @@ class MainActivity : ComponentActivity() {
                 Icon(
                     painter = painterResource(id = R.drawable.baseline_output_24),
                     contentDescription = "Export button"
+                )
+            }
+            IconButton(onClick = { openDocument.launch(arrayOf("application/json")) }) {
+                Icon(
+                    painter = painterResource(id = R.drawable.place_item_24),
+                    contentDescription = "Import button"
                 )
             }
         })
@@ -267,10 +277,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun export(uri: Uri) {
+    private fun export(uri: Uri?) {
+        if (uri == null) {
+            return
+        }
+
+        Log.d(TAG_DEBUG, "export")
         this.lifecycle.coroutineScope.launch {
             val repositories = database.getRepositories()
             val json = JSONArray(repositories)
+            Log.d(TAG_DEBUG, "export -> $json")
             try {
                 contentResolver.openOutputStream(uri)?.use { outputStream ->
                     outputStream.write(json.toString().toByteArray())
@@ -280,6 +296,39 @@ class MainActivity : ComponentActivity() {
                     this@MainActivity, "Error exporting data", Toast.LENGTH_SHORT
                 ).show()
             }
+        }
+    }
+
+    private fun import(uri: Uri?) {
+        if (uri == null) {
+            return
+        }
+
+        Log.d(TAG_DEBUG, "import")
+        try {
+            contentResolver.openInputStream(uri)?.use { inputStream ->
+                this.lifecycle.coroutineScope.launch {
+                    val bufferedReader = BufferedReader(InputStreamReader(inputStream))
+                    val importedJson = JSONArray(bufferedReader.readText())
+                    inputStream.close()
+
+                    val repositories = database.getRepositories()
+
+                    val toImport =
+                        (0 until importedJson.length()).map { importedJson.getString(it) }
+                            .filter { it !in repositories }.toList()
+
+                    toImport.forEach {
+                        addAPKRepository(it)
+                    }
+
+                    Log.d(TAG_DEBUG, "import -> $toImport")
+                }
+            }
+        } catch (e: Exception) {
+            Toast.makeText(
+                this@MainActivity, "Error importing data", Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
