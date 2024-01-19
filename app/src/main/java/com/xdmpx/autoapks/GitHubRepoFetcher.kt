@@ -180,6 +180,11 @@ object GitHubRepoFetcher {
                     )
                 }
             }
+            if (applicationID == null && source != "namespace") {
+                requestApplicationIdGradleKTS(
+                    repository, branchName, context, onResult, "namespace"
+                )
+            }
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestApplicationIdGradleKTS::ERROR::$requestUrl -> ${error.message}"
@@ -207,6 +212,7 @@ object GitHubRepoFetcher {
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val applicationID =
                 response.substringAfterOrNull("$source ").substringBeforeOrNull("\n")
+            Log.d(TAG_DEBUG, "requestApplicationIdGradle::$requestUrl -> $applicationID")
             applicationID?.let { it ->
                 val applicationID = it.trim('\'', '\"')
                 if (applicationID != it) {
@@ -220,7 +226,11 @@ object GitHubRepoFetcher {
                     )
                 }
             }
-
+            if (applicationID == null && source != "namespace") {
+                requestApplicationIdGradle(
+                    repository, branchName, context, onResult, "namespace"
+                )
+            }
 
         }, { error ->
             Log.d(
