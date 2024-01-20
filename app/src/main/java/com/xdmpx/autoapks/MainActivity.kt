@@ -103,8 +103,10 @@ class MainActivity : ComponentActivity() {
                 apks = database.getAll()
             }
 
-            apks.forEach {
-                this@MainActivity.apks.add(GitHubAPK(it, this@MainActivity))
+            apks.forEach { it ->
+                this@MainActivity.apks.add(GitHubAPK(
+                    it, this@MainActivity
+                ) { gitHubAPK -> removeAPKRepository(gitHubAPK) })
             }
         }
     }
@@ -121,8 +123,14 @@ class MainActivity : ComponentActivity() {
         this.lifecycle.coroutineScope.launch {
             val apk = GitHubAPKEntity(repository)
             database.insertAll(apk)
-            apks.add(GitHubAPK(apk, this@MainActivity))
+            apks.add(GitHubAPK(
+                apk, this@MainActivity
+            ) { gitHubAPK -> removeAPKRepository(gitHubAPK) })
         }
+    }
+
+    private fun removeAPKRepository(apk: GitHubAPK) {
+        apks.remove(apk)
     }
 
     @Composable
@@ -227,17 +235,23 @@ class MainActivity : ComponentActivity() {
                             label = { Text("Repository URL") },
                         )
                     }
-                    AddAPKRepositoryDialogButtons(userInput, Modifier.weight(0.2f), onDismissRequest, onAddRequest)
+                    AddAPKRepositoryDialogButtons(
+                        userInput, Modifier.weight(0.2f), onDismissRequest, onAddRequest
+                    )
                 }
             }
         }
     }
 
     @Composable
-    private fun AddAPKRepositoryDialogButtons(userInput: String, modifier: Modifier = Modifier, onDismissRequest: () -> Unit, onAddRequest: (userInput: String) -> Unit){
+    private fun AddAPKRepositoryDialogButtons(
+        userInput: String,
+        modifier: Modifier = Modifier,
+        onDismissRequest: () -> Unit,
+        onAddRequest: (userInput: String) -> Unit
+    ) {
         Row(
-            modifier = modifier
-                .fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
         ) {
             TextButton(
@@ -251,7 +265,9 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun AddAPKRepositoryButton(userInput: String, onDismissRequest: () -> Unit, onAddRequest: (userInput: String) -> Unit){
+    private fun AddAPKRepositoryButton(
+        userInput: String, onDismissRequest: () -> Unit, onAddRequest: (userInput: String) -> Unit
+    ) {
         TextButton(
             onClick = {
                 val repo = Utils.userInputToAPKRepository(userInput)
@@ -273,9 +289,7 @@ class MainActivity : ComponentActivity() {
                 }
                 if (repo.isNullOrBlank()) {
                     Toast.makeText(
-                        this@MainActivity,
-                        "Invalid Android APP Repository",
-                        Toast.LENGTH_SHORT
+                        this@MainActivity, "Invalid Android APP Repository", Toast.LENGTH_SHORT
                     ).show()
                 }
                 onDismissRequest()

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import coil.compose.AsyncImage
 import com.xdmpx.autoapks.GitHubRepoFetcher.fetchDefaultRepoBranch
+import com.xdmpx.autoapks.Utils.CustomDialog
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity
@@ -48,7 +49,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) {
+class GitHubAPK(
+    private val apk: GitHubAPKEntity,
+    private val context: Context,
+    private val onRemove: (gitHubAPK: GitHubAPK) -> Unit
+) {
     private val TAG_DEBUG = "GitHubAPK"
     private var database: GitHubAPKDao
     private var apkIcon: MutableState<String?> = mutableStateOf(apk.iconURL)
@@ -220,6 +225,7 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun ApkCard(modifier: Modifier = Modifier) {
+        val showDialog = remember { mutableStateOf(false) }
         val haptics = LocalHapticFeedback.current
 
         Row(
@@ -229,14 +235,18 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
                 .combinedClickable(onClick = {
                     apk.applicationPackageName?.let { Utils.openApplicationInfo(context, it) }
                 }, onLongClick = {
-                    apk.applicationPackageName?.let {
-                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        Utils.uninstallApplication(context, it)
-                    }
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    showDialog.value = true/*
+
+                     */
                 })
         ) {
             ApkInfo(modifier.weight(0.75f))
             ApkVersionControl(modifier.weight(0.25f))
+        }
+
+        if (showDialog.value) {
+            ApkDialog(onDismissRequest = { showDialog.value = false })
         }
 
         recomposed++
@@ -321,6 +331,37 @@ class GitHubAPK(private val apk: GitHubAPKEntity, private val context: Context) 
                 apkName?.let { Text(it, Modifier) }
             }
 
+        }
+    }
+
+    @Composable
+    fun ApkDialog(onDismissRequest: () -> Unit) {
+        CustomDialog(onDismissRequest) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Max)
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column {
+                    apk.applicationPackageName?.let {
+                        TextButton(onClick = {
+                            Utils.uninstallApplication(context, it)
+                            onDismissRequest()
+                        }) {
+                            Text("Uninstall")
+                        }
+                    }
+                    TextButton(onClick = {
+                        onDismissRequest()
+                        scope.launch { database.delete(apk) }
+                        onRemove(this@GitHubAPK)
+                    }) {
+                        Text("Remove")
+                    }
+                }
+            }
         }
     }
 
