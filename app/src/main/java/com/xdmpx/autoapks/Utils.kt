@@ -7,6 +7,17 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat.startActivity
 
 object Utils {
@@ -77,4 +88,19 @@ object Utils {
         }
         return null
     }
+
+    @Composable
+    fun CustomDialog(onDismissRequest: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+        Dialog(onDismissRequest = { onDismissRequest() }) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Max)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+                content = content
+            )
+        }
+    }
+
 }

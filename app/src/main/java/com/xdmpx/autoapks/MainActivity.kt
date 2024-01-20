@@ -19,11 +19,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,11 +44,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.coroutineScope
+import com.xdmpx.autoapks.Utils.CustomDialog
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity
@@ -168,7 +165,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun TopAppBarMenu() {
-        var expanded by remember { mutableStateOf(true) }
+        var expanded by remember { mutableStateOf(false) }
 
         IconButton(onClick = { expanded = !expanded }) {
             Icon(
@@ -176,11 +173,11 @@ class MainActivity : ComponentActivity() {
             )
         }
 
-        DropdownMenu(
-            expanded = expanded, onDismissRequest = { expanded = false }
-        ) {
-            DropdownMenuItem(text = { Text(text = "Export") }, onClick = { createDocument.launch("apks_export.json") })
-            DropdownMenuItem(text = { Text(text = "Import") }, onClick = { openDocument.launch(arrayOf("application/json")) })
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(text = { Text(text = "Export") },
+                onClick = { createDocument.launch("apks_export.json") })
+            DropdownMenuItem(text = { Text(text = "Import") },
+                onClick = { openDocument.launch(arrayOf("application/json")) })
         }
 
     }
@@ -209,82 +206,83 @@ class MainActivity : ComponentActivity() {
     ) {
         var userInput by remember { mutableStateOf("") }
 
-        Dialog(onDismissRequest = { onDismissRequest() }) {
-            Card(
+        CustomDialog(onDismissRequest) {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(300.dp)
                     .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .weight(0.8f),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            OutlinedTextField(
-                                value = userInput,
-                                onValueChange = { userInput = it },
-                                label = { Text("Repository URL") },
-                            )
-                        }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(0.2f),
-                            horizontalArrangement = Arrangement.Center,
-                        ) {
-                            TextButton(
-                                onClick = { onDismissRequest() },
-                                modifier = Modifier.padding(8.dp),
-                            ) {
-                                Text("Cancel")
-                            }
-                            TextButton(
-                                onClick = {
-                                    val repo = Utils.userInputToAPKRepository(userInput)
-                                    repo?.let { repo ->
-                                        GitHubRepoFetcher.validateAndroidAPKRepository(
-                                            repo, this@MainActivity
-                                        ) {
-                                            if (it) {
-                                                onAddRequest(repo)
-                                            } else {
-                                                Toast.makeText(
-                                                    this@MainActivity,
-                                                    "Invalid Android APP Repository",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        }
-
-                                    }
-                                    if (repo.isNullOrBlank()) {
-                                        Toast.makeText(
-                                            this@MainActivity,
-                                            "Invalid Android APP Repository",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                    onDismissRequest()
-                                },
-                                modifier = Modifier.padding(8.dp),
-                            ) {
-                                Text("Add")
-                            }
-                        }
-
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(0.8f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        OutlinedTextField(
+                            value = userInput,
+                            onValueChange = { userInput = it },
+                            label = { Text("Repository URL") },
+                        )
                     }
+                    AddAPKRepositoryDialogButtons(userInput, Modifier.weight(0.2f), onDismissRequest, onAddRequest)
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun AddAPKRepositoryDialogButtons(userInput: String, modifier: Modifier = Modifier, onDismissRequest: () -> Unit, onAddRequest: (userInput: String) -> Unit){
+        Row(
+            modifier = modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            TextButton(
+                onClick = { onDismissRequest() },
+                modifier = Modifier.padding(8.dp),
+            ) {
+                Text("Cancel")
+            }
+            AddAPKRepositoryButton(userInput, onDismissRequest, onAddRequest)
+        }
+    }
+
+    @Composable
+    private fun AddAPKRepositoryButton(userInput: String, onDismissRequest: () -> Unit, onAddRequest: (userInput: String) -> Unit){
+        TextButton(
+            onClick = {
+                val repo = Utils.userInputToAPKRepository(userInput)
+                repo?.let { repo ->
+                    GitHubRepoFetcher.validateAndroidAPKRepository(
+                        repo, this@MainActivity
+                    ) {
+                        if (it) {
+                            onAddRequest(repo)
+                        } else {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Invalid Android APP Repository",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+
+                }
+                if (repo.isNullOrBlank()) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Invalid Android APP Repository",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                onDismissRequest()
+            },
+            modifier = Modifier.padding(8.dp),
+        ) {
+            Text("Add")
         }
     }
 
