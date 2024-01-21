@@ -182,10 +182,14 @@ class MainActivity : ComponentActivity() {
         }
 
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text(text = "Export") },
-                onClick = { createDocument.launch("apks_export.json") })
-            DropdownMenuItem(text = { Text(text = "Import") },
-                onClick = { openDocument.launch(arrayOf("application/json")) })
+            DropdownMenuItem(text = { Text(text = "Export") }, onClick = {
+                expanded = false
+                createDocument.launch("apks_export.json")
+            })
+            DropdownMenuItem(text = { Text(text = "Import") }, onClick = {
+                expanded = false
+                openDocument.launch(arrayOf("application/json"))
+            })
         }
 
     }
