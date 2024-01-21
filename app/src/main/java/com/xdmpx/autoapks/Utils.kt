@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -72,6 +73,11 @@ object Utils {
         val uri = Uri.fromParts("package", packageName, null)
         intent.setData(uri)
         startActivity(context, intent, null)
+    }
+
+    fun installApplication(context: Context, apkLink: String){
+        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(apkLink))
+        startActivity(context, browserIntent, null)
     }
 
     fun userInputToAPKRepository(userInput: String): String? {

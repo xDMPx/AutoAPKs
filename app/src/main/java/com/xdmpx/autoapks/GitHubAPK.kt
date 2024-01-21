@@ -236,9 +236,7 @@ class GitHubAPK(
                     apk.applicationPackageName?.let { Utils.openApplicationInfo(context, it) }
                 }, onLongClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    showDialog.value = true/*
-
-                     */
+                    showDialog.value = true
                 })
         ) {
             ApkInfo(modifier.weight(0.75f))
@@ -353,6 +351,14 @@ class GitHubAPK(
                             Text("Uninstall")
                         }
                     }
+                    if (apk.applicationVersionCode != null && apkLink.value != null) {
+                        TextButton(onClick = {
+                            onDismissRequest()
+                            apkLink.value?.let { Utils.installApplication(context, it) }
+                        }) {
+                            Text("Reinstall")
+                        }
+                    }
                     TextButton(onClick = {
                         onDismissRequest()
                         scope.launch { database.delete(apk) }
@@ -368,8 +374,7 @@ class GitHubAPK(
     @Composable
     fun InstallButton(apkLink: String, modifier: Modifier = Modifier) {
         Button(onClick = {
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(apkLink))
-            startActivity(context, browserIntent, null)
+            Utils.installApplication(context, apkLink)
         }, modifier) {
             Text("Install")
         }
