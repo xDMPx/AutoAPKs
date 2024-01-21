@@ -83,31 +83,37 @@ class GitHubAPK(
 
     private fun fetchIcon() {
         apk.repositoryDefaultBranch?.let { branchName ->
+            if (apk.iconURL != null) {
+                return
+            }
             GitHubRepoFetcher.requestIcon(apk.repository, branchName, context) { iconUrl ->
                 if (apk.iconURL != iconUrl) {
                     apk.iconURL = iconUrl
                     updateDatabase()
                 }
             }
-
         }
     }
 
     private fun fetchAppInfo() {
         val repository = apk.repository
         apk.repositoryDefaultBranch?.let { branchName ->
-            GitHubRepoFetcher.requestApplicationId(
-                repository, branchName, context
-            ) { applicationID ->
-                if (apk.applicationId != applicationID) {
-                    apk.applicationId = applicationID
-                    updateDatabase()
+            if (apk.applicationId == null) {
+                GitHubRepoFetcher.requestApplicationId(
+                    repository, branchName, context
+                ) { applicationID ->
+                    if (apk.applicationId != applicationID) {
+                        apk.applicationId = applicationID
+                        updateDatabase()
+                    }
                 }
             }
-            GitHubRepoFetcher.requestApplicationName(repository, branchName, context) { name ->
-                if (apk.applicationName != name) {
-                    apk.applicationName = name
-                    updateDatabase()
+            if (apk.applicationName == null) {
+                GitHubRepoFetcher.requestApplicationName(repository, branchName, context) { name ->
+                    if (apk.applicationName != name) {
+                        apk.applicationName = name
+                        updateDatabase()
+                    }
                 }
             }
         }
@@ -253,7 +259,6 @@ class GitHubAPK(
 
     @Composable
     fun ApkInfo(modifier: Modifier = Modifier) {
-
         Column(
             modifier.fillMaxSize()
         ) {
