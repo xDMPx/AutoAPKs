@@ -122,9 +122,9 @@ class MainActivity : ComponentActivity() {
     private fun addAPKRepository(repository: String) {
         this.lifecycle.coroutineScope.launch {
             val apk = GitHubAPKEntity(repository)
-            database.insertAll(apk)
+            val apkId = database.insert(apk)
             apks.add(GitHubAPK(
-                apk, this@MainActivity
+                database.get(apkId), this@MainActivity
             ) { gitHubAPK -> removeAPKRepository(gitHubAPK) })
         }
     }
