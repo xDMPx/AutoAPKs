@@ -181,21 +181,31 @@ class GitHubAPK(
     }
 
     private fun setPackageName() {
+        setInstallState()
+        if (apk.applicationPackageName != null) {
+            return
+        }
         val name = apkName.value
         Log.d(TAG_DEBUG, "setPackageName::${deriveAppName()}::$name")
         name?.let {
             val packageName = Utils.getAppPackageName(context, it)
             Log.d(TAG_DEBUG, "setPackageName:$name -> $packageName")
             if (apk.applicationPackageName != packageName) {
-                if (packageName.isNullOrBlank()) {
-                    Log.d(
-                        TAG_DEBUG,
-                        "setPackageName -> $packageName -> ${packageName.isNullOrBlank()}"
-                    )
-                    apk.applicationVersionCode = null
-                    apk.applicationVersionName = null
-                }
                 apk.applicationPackageName = packageName
+                updateDatabase()
+            }
+        }
+    }
+
+    private fun setInstallState() {
+        Log.d(TAG_DEBUG, "setInstallState::${deriveAppName()}")
+        apk.applicationPackageName?.let { packageName ->
+            val installed = Utils.isAppInstalled(context, packageName)
+            Log.d(TAG_DEBUG, "setInstallState::${deriveAppName()} -> $installed")
+            if (!installed) {
+                apk.applicationPackageName = null
+                apk.applicationVersionCode = null
+                apk.applicationVersionName = null
                 updateDatabase()
             }
         }

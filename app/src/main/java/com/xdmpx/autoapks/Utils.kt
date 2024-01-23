@@ -40,6 +40,22 @@ object Utils {
         return null
     }
 
+    fun isAppInstalled(context: Context, packageName: String): Boolean {
+        Log.d(TAG_DEBUG, "isAppInstalled::$packageName")
+        val packageManager: PackageManager = context.packageManager
+
+        val appInstalled = try {
+            packageManager.getPackageInfo(packageName, 0)
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
+        }
+
+        Log.d(TAG_DEBUG, "isAppInstalled::$packageName -> $appInstalled")
+
+        return appInstalled
+    }
+
     fun getAppPackageName(context: Context, appName: String): String? {
         Log.d(TAG_DEBUG, "getAppPackageName::$appName")
         val packageManager: PackageManager = context.packageManager
@@ -75,7 +91,7 @@ object Utils {
         startActivity(context, intent, null)
     }
 
-    fun installApplication(context: Context, apkLink: String){
+    fun installApplication(context: Context, apkLink: String) {
         val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(apkLink))
         startActivity(context, browserIntent, null)
     }
