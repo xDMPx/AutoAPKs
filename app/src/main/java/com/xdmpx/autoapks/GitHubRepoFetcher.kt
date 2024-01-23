@@ -20,6 +20,16 @@ object GitHubRepoFetcher {
         return null
     }
 
+    private fun String?.substringAfterLastOrNull(delimiter: String): String? {
+        this?.let { str ->
+            str.substringAfterLast(delimiter, missingDelimiterValue = "").let {
+                it.ifBlank { return null }
+                return it
+            }
+        }
+        return null
+    }
+
     private fun String?.substringBeforeOrNull(delimiter: String): String? {
         this?.let { str ->
             str.substringBefore(delimiter, missingDelimiterValue = "").let {
@@ -102,7 +112,8 @@ object GitHubRepoFetcher {
 
         Log.d(TAG_DEBUG, "requestLatestReleaseAssets::$requestUrl")
         val assetsRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
-            val apkHref = response.substringBeforeOrNull(".apk\"").substringAfterOrNull("href=\"")
+            val apkHref =
+                response.substringBeforeOrNull(".apk\"").substringAfterLastOrNull("href=\"")
             apkHref?.let { apkHref ->
                 val apkURL = "https://github.com/$apkHref.apk"
                 Log.d(TAG_DEBUG, "requestLatestReleaseAssets::$requestUrl -> $apkURL")
