@@ -56,6 +56,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.time.LocalDate
 
 
 class MainActivity : ComponentActivity() {
@@ -184,7 +185,11 @@ class MainActivity : ComponentActivity() {
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(text = { Text(text = "Export") }, onClick = {
                 expanded = false
-                createDocument.launch("apks_export.json")
+                val date = LocalDate.now()
+                val year = date.year
+                val month = String.format("%02d", date.monthValue)
+                val day = date.dayOfMonth
+                createDocument.launch("apks_export_${year}_${month}_$day.json")
             })
             DropdownMenuItem(text = { Text(text = "Import") }, onClick = {
                 expanded = false
