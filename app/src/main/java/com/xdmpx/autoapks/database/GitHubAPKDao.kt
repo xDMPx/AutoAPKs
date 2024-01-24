@@ -18,6 +18,9 @@ interface GitHubAPKDao {
     @Query("SELECT repository FROM githubapk")
     suspend fun getRepositories(): List<String>
 
+    @Query("SELECT repository FROM githubapk WHERE repository = :repository")
+    suspend fun getRepositoryByName(repository: String): String?
+
     @Insert
     suspend fun insert(githubApk: GitHubAPKEntity): Long
 

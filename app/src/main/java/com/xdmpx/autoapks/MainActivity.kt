@@ -280,26 +280,35 @@ class MainActivity : ComponentActivity() {
         TextButton(
             onClick = {
                 val repo = Utils.userInputToAPKRepository(userInput)
-                repo?.let { repo ->
-                    GitHubRepoFetcher.validateAndroidAPKRepository(
-                        repo, this@MainActivity
-                    ) {
-                        if (it) {
-                            onAddRequest(repo)
+                this.lifecycle.coroutineScope.launch {
+                    repo?.let { repo ->
+                        if (database.getRepositoryByName(repo).isNullOrBlank()) {
+                            GitHubRepoFetcher.validateAndroidAPKRepository(
+                                repo, this@MainActivity
+                            ) {
+                                if (it) {
+                                    onAddRequest(repo)
+                                } else {
+                                    Toast.makeText(
+                                        this@MainActivity,
+                                        "Invalid Android APP Repository",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
                         } else {
                             Toast.makeText(
                                 this@MainActivity,
-                                "Invalid Android APP Repository",
+                                "Android APP Repository already added",
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
                     }
-
-                }
-                if (repo.isNullOrBlank()) {
-                    Toast.makeText(
-                        this@MainActivity, "Invalid Android APP Repository", Toast.LENGTH_SHORT
-                    ).show()
+                    if (repo.isNullOrBlank()) {
+                        Toast.makeText(
+                            this@MainActivity, "Invalid Android APP Repository", Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
                 onDismissRequest()
             },
