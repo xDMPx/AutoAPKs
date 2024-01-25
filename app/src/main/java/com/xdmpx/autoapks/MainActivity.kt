@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -54,10 +56,10 @@ import com.xdmpx.autoapks.database.GitHubAPKEntity
 import com.xdmpx.autoapks.ui.theme.AutoAPKsTheme
 import kotlinx.coroutines.launch
 import org.json.JSONArray
+import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.time.LocalDate
-
 
 class MainActivity : ComponentActivity() {
     private val TAG_DEBUG = "MainActivity"
@@ -120,9 +122,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun addAPKRepository(repository: String) {
+    private fun addAPKRepository(repository: String, baseDirectory: String) {
         this.lifecycle.coroutineScope.launch {
-            val apk = GitHubAPKEntity(repository)
+            val apk = GitHubAPKEntity(repository, baseDirectory = baseDirectory)
             val apkId = database.insert(apk)
             apks.add(GitHubAPK(
                 database.get(apkId), this@MainActivity
@@ -212,40 +214,84 @@ class MainActivity : ComponentActivity() {
         }
 
         if (showDialog.value) {
-            AddAPKRepositoryDialog(onAddRequest = { userInput -> addAPKRepository(userInput) },
-                onDismissRequest = { showDialog.value = !showDialog.value })
+            AddAPKRepositoryDialog(onAddRequest = { userInput, baseDirectory ->
+                addAPKRepository(
+                    userInput, baseDirectory
+                )
+            }, onDismissRequest = { showDialog.value = !showDialog.value })
         }
     }
 
     @Composable
     fun AddAPKRepositoryDialog(
-        onDismissRequest: () -> Unit, onAddRequest: (userInput: String) -> Unit
+        onDismissRequest: () -> Unit,
+        onAddRequest: (userInput: String, baseDirectory: String) -> Unit
     ) {
         var userInput by remember { mutableStateOf("") }
+        var baseDirectory by remember { mutableStateOf("app") }
 
         CustomDialog(onDismissRequest) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp)
+                    .height(IntrinsicSize.Min)
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .weight(0.8f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        OutlinedTextField(
-                            value = userInput,
-                            onValueChange = { userInput = it },
-                            label = { Text("Repository URL") },
-                        )
+                    Column {
+                        AddAPKRepositoryTextField(userInput, { userInput = it })
+                        AddAPKRepositoryAdvance(baseDirectory, { baseDirectory = it })
                     }
                     AddAPKRepositoryDialogButtons(
-                        userInput, Modifier.weight(0.2f), onDismissRequest, onAddRequest
+                        userInput, baseDirectory, onDismissRequest, onAddRequest
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun AddAPKRepositoryTextField(
+        value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier
+    ) {
+        Box(
+            modifier = modifier, contentAlignment = Alignment.Center
+        ) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                minLines = 2,
+                maxLines = 2,
+                label = { Text("Repository URL") },
+            )
+        }
+    }
+
+    @Composable
+    fun AddAPKRepositoryAdvance(
+        value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier
+    ) {
+        var expanded by remember { mutableStateOf(false) }
+
+        Box(
+            modifier = modifier, contentAlignment = Alignment.TopStart
+        ) {
+            Column {
+                TextButton(
+                    onClick = { expanded = !expanded }, modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowDown, contentDescription = null
+                    )
+                    Text(text = "Advance")
+                }
+                if (expanded) {
+                    OutlinedTextField(
+                        value = value,
+                        onValueChange = onValueChange,
+                        maxLines = 1,
+                        label = { Text("Base directory") },
                     )
                 }
             }
@@ -255,9 +301,10 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun AddAPKRepositoryDialogButtons(
         userInput: String,
-        modifier: Modifier = Modifier,
+        baseDirectory: String,
         onDismissRequest: () -> Unit,
-        onAddRequest: (userInput: String) -> Unit
+        onAddRequest: (userInput: String, baseDirectory: String) -> Unit,
+        modifier: Modifier = Modifier,
     ) {
         Row(
             modifier = modifier.fillMaxWidth(),
@@ -269,13 +316,17 @@ class MainActivity : ComponentActivity() {
             ) {
                 Text("Cancel")
             }
-            AddAPKRepositoryButton(userInput, onDismissRequest, onAddRequest)
+            AddAPKRepositoryButton(userInput, baseDirectory, onDismissRequest, onAddRequest)
         }
     }
 
     @Composable
     private fun AddAPKRepositoryButton(
-        userInput: String, onDismissRequest: () -> Unit, onAddRequest: (userInput: String) -> Unit
+        userInput: String,
+        baseDirectory: String,
+        onDismissRequest: () -> Unit,
+        onAddRequest: (userInput: String, baseDirectory: String) -> Unit
+
     ) {
         TextButton(
             onClick = {
@@ -284,10 +335,10 @@ class MainActivity : ComponentActivity() {
                     repo?.let { repo ->
                         if (database.getRepositoryByName(repo).isNullOrBlank()) {
                             GitHubRepoFetcher.validateAndroidAPKRepository(
-                                repo, this@MainActivity
+                                repo, baseDirectory, this@MainActivity
                             ) {
                                 if (it) {
-                                    onAddRequest(repo)
+                                    onAddRequest(repo, baseDirectory)
                                 } else {
                                     Toast.makeText(
                                         this@MainActivity,
@@ -300,7 +351,7 @@ class MainActivity : ComponentActivity() {
                             Toast.makeText(
                                 this@MainActivity,
                                 "Android APP Repository already added",
-                                Toast.LENGTH_SHORT
+                                Toast.LENGTH_SHORT,
                             ).show()
                         }
                     }
@@ -325,7 +376,11 @@ class MainActivity : ComponentActivity() {
 
         Log.d(TAG_DEBUG, "export")
         this.lifecycle.coroutineScope.launch {
-            val repositories = database.getRepositories()
+            val repositories = database.getExportData().map {
+                val jsonObject = JSONObject()
+                jsonObject.put("repository", it.repository)
+                jsonObject.put("base_directory", it.baseDirectory)
+            }
             val json = JSONArray(repositories)
             Log.d(TAG_DEBUG, "export -> $json")
             try {
@@ -356,11 +411,11 @@ class MainActivity : ComponentActivity() {
                     val repositories = database.getRepositories()
 
                     val toImport =
-                        (0 until importedJson.length()).map { importedJson.getString(it) }
-                            .filter { it !in repositories }.toList()
+                        (0 until importedJson.length()).map { importedJson.getJSONObject(it) }
+                            .filter { it.getString("repository") !in repositories }.toList()
 
                     toImport.forEach {
-                        addAPKRepository(it)
+                        addAPKRepository(it.getString("repository"), it.getString("base_directory"))
                     }
 
                     Log.d(TAG_DEBUG, "import -> $toImport")

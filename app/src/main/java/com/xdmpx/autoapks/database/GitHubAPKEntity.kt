@@ -10,6 +10,7 @@ import androidx.room.Update
 data class GitHubAPKEntity(
     @ColumnInfo(name = "repository") var repository: String,
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @ColumnInfo(name = "base_directory") var baseDirectory: String = "app",
     @ColumnInfo(name = "repository_default_branch") var repositoryDefaultBranch: String? = null,
     @ColumnInfo(name = "icon_url") var iconURL: String? = null,
     @ColumnInfo(name = "application_id") var applicationId: String? = null,
@@ -21,4 +22,9 @@ data class GitHubAPKEntity(
     @ColumnInfo(name = "release_tag") var releaseTag: String? = null,
     @ColumnInfo(name = "release_link") var releaseLink: String? = null,
     @ColumnInfo(name = "to_update") var toUpdate: Boolean = false,
+)
+
+data class RepositoryExportData(
+    @ColumnInfo(name = "repository") val repository: String,
+    @ColumnInfo(name = "base_directory") val baseDirectory: String,
 )

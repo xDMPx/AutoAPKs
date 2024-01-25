@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.Transaction
 import androidx.room.Update
 
 @Dao
@@ -20,6 +19,9 @@ interface GitHubAPKDao {
 
     @Query("SELECT repository FROM githubapk WHERE repository = :repository")
     suspend fun getRepositoryByName(repository: String): String?
+
+    @Query("SELECT repository,base_directory FROM githubapk")
+    suspend fun getExportData(): List<RepositoryExportData>
 
     @Insert
     suspend fun insert(githubApk: GitHubAPKEntity): Long

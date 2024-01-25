@@ -135,14 +135,15 @@ object GitHubRepoFetcher {
     fun requestApplicationId(
         repository: String,
         branchName: String,
+        baseDirectory: String,
         context: Context,
         buildType: GradleType = GradleType.KTS,
         onResult: (applicationId: String) -> Unit,
     ) {
         if (buildType == GradleType.KTS) {
-            requestApplicationIdGradleKTS(repository, branchName, context, onResult)
+            requestApplicationIdGradleKTS(repository, branchName, baseDirectory, context, onResult)
         } else if (buildType == GradleType.GRADLE) {
-            requestApplicationIdGradle(repository, branchName, context, onResult)
+            requestApplicationIdGradle(repository, branchName, baseDirectory, context, onResult)
         }
     }
 
@@ -153,26 +154,29 @@ object GitHubRepoFetcher {
     fun requestApplicationName(
         repository: String,
         branchName: String,
+        baseDirectory: String,
         context: Context,
         appNameSource: AppNameSource = AppNameSource.MANIFEST,
         onResult: (appName: String) -> Unit,
     ) {
         if (appNameSource == AppNameSource.MANIFEST) {
-            requestApplicationNameManifest(repository, branchName, context, onResult)
+            requestApplicationNameManifest(repository, branchName, baseDirectory, context, onResult)
         } else if (appNameSource == AppNameSource.STRINGS) {
-            requestApplicationNameStrings(repository, branchName, context, onResult)
+            requestApplicationNameStrings(repository, branchName, baseDirectory, context, onResult)
         }
     }
 
     private fun requestApplicationIdGradleKTS(
         repository: String,
         branchName: String,
+        baseDirectory: String,
         context: Context,
         onResult: (applicationId: String) -> Unit,
         source: String = "applicationId",
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
-        val requestUrl = "https://github.com/$repository/raw/$branchName/app/build.gradle.kts"
+        val requestUrl =
+            "https://github.com/$repository/raw/$branchName/$baseDirectory/build.gradle.kts"
 
         Log.d(TAG_DEBUG, "requestApplicationIdGradleKTS::$requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
@@ -187,13 +191,13 @@ object GitHubRepoFetcher {
                     onResult(applicationID)
                 } else if (source != "namespace") {
                     requestApplicationIdGradleKTS(
-                        repository, branchName, context, onResult, "namespace"
+                        repository, branchName, baseDirectory, context, onResult, "namespace"
                     )
                 }
             }
             if (applicationID == null && source != "namespace") {
                 requestApplicationIdGradleKTS(
-                    repository, branchName, context, onResult, "namespace"
+                    repository, branchName, baseDirectory, context, onResult, "namespace"
                 )
             }
         }, { error ->
@@ -201,7 +205,7 @@ object GitHubRepoFetcher {
                 TAG_DEBUG, "requestApplicationIdGradleKTS::ERROR::$requestUrl -> ${error.message}"
             )
             requestApplicationId(
-                repository, branchName, context, GradleType.GRADLE, onResult
+                repository, branchName, baseDirectory, context, GradleType.GRADLE, onResult
             )
             // TODO: Handle error
         })
@@ -212,12 +216,14 @@ object GitHubRepoFetcher {
     private fun requestApplicationIdGradle(
         repository: String,
         branchName: String,
+        baseDirectory: String,
         context: Context,
         onResult: (applicationID: String) -> Unit,
         source: String = "applicationId",
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
-        val requestUrl = "https://github.com/$repository/raw/$branchName/app/build.gradle"
+        val requestUrl =
+            "https://github.com/$repository/raw/$branchName/$baseDirectory/build.gradle"
 
         Log.d(TAG_DEBUG, "requestApplicationIdGradle::$requestUrl")
         val applicationIDRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
@@ -233,13 +239,13 @@ object GitHubRepoFetcher {
                     onResult(applicationID)
                 } else if (source != "namespace") {
                     requestApplicationIdGradle(
-                        repository, branchName, context, onResult, "namespace"
+                        repository, branchName, baseDirectory, context, onResult, "namespace"
                     )
                 }
             }
             if (applicationID == null && source != "namespace") {
                 requestApplicationIdGradle(
-                    repository, branchName, context, onResult, "namespace"
+                    repository, branchName, baseDirectory, context, onResult, "namespace"
                 )
             }
 
@@ -254,11 +260,15 @@ object GitHubRepoFetcher {
     }
 
     private fun requestApplicationNameManifest(
-        repository: String, branchName: String, context: Context, onResult: (name: String) -> Unit
+        repository: String,
+        branchName: String,
+        baseDirectory: String,
+        context: Context,
+        onResult: (name: String) -> Unit
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
         val requestUrl =
-            "https://github.com/$repository/raw/$branchName/app/src/main/AndroidManifest.xml"
+            "https://github.com/$repository/raw/$branchName/$baseDirectory/src/main/AndroidManifest.xml"
 
         Log.d(TAG_DEBUG, "requestApplicationNameManifest::$requestUrl")
         val manifestRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
@@ -275,7 +285,12 @@ object GitHubRepoFetcher {
                         TAG_DEBUG, "requestApplicationNameManifest::$requestUrl -> NO ANDROID:NAME"
                     )
                     requestApplicationName(
-                        repository, branchName, context, AppNameSource.STRINGS, onResult
+                        repository,
+                        branchName,
+                        baseDirectory,
+                        context,
+                        AppNameSource.STRINGS,
+                        onResult
                     )
                 }
             }
@@ -284,7 +299,7 @@ object GitHubRepoFetcher {
                 TAG_DEBUG, "requestApplicationNameManifest::ERROR::$requestUrl -> ${error.message}"
             )
             requestApplicationName(
-                repository, branchName, context, AppNameSource.STRINGS, onResult
+                repository, branchName, baseDirectory, context, AppNameSource.STRINGS, onResult
             )
             // TODO: Handle error
         })
@@ -292,11 +307,15 @@ object GitHubRepoFetcher {
     }
 
     private fun requestApplicationNameStrings(
-        repository: String, branchName: String, context: Context, onResult: (name: String) -> Unit
+        repository: String,
+        branchName: String,
+        baseDirectory: String,
+        context: Context,
+        onResult: (name: String) -> Unit
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
         val requestUrl =
-            "https://github.com/$repository/raw/main/app/src/$branchName/res/values/strings.xml"
+            "https://github.com/$repository/raw/main/$baseDirectory/src/$branchName/res/values/strings.xml"
 
         Log.d(TAG_DEBUG, "requestApplicationNameStrings::$requestUrl")
         val stringRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
@@ -322,7 +341,10 @@ object GitHubRepoFetcher {
     }
 
     fun validateAndroidAPKRepository(
-        repository: String, context: Context, onResult: (valid: Boolean) -> Unit
+        repository: String,
+        baseDirectory: String,
+        context: Context,
+        onResult: (valid: Boolean) -> Unit
     ) {
         Log.d(TAG_DEBUG, "validateAndroidAPKRepository::$repository")
         fetchDefaultRepoBranch(repository, context, onError = {
@@ -330,7 +352,7 @@ object GitHubRepoFetcher {
         }) { branchName ->
             val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
             val requestUrl =
-                "https://github.com/$repository/raw/$branchName/app/src/main/AndroidManifest.xml"
+                "https://github.com/$repository/raw/$branchName/$baseDirectory/src/main/AndroidManifest.xml"
             val manifestRequest = StringRequest(Request.Method.GET, requestUrl, { _ ->
                 onResult(true)
             }, { _ ->
@@ -344,30 +366,37 @@ object GitHubRepoFetcher {
     fun requestIcon(
         repository: String,
         branchName: String,
+        baseDirectory: String,
         context: Context,
         iconFolder: String? = null,
         iconName: String? = null,
         onResult: (iconUrl: String) -> Unit
     ) {
         when {
-            (iconFolder == null) -> requestIconFolder(repository, branchName, context, onResult)
-            (iconName == null) -> requestIconName(
-                repository, branchName, context, iconFolder, onResult
+            (iconFolder == null) -> requestIconFolder(
+                repository, branchName, baseDirectory, context, onResult
             )
 
-            else -> requestIconUrl(repository, branchName, context, iconFolder, iconName, onResult)
+            (iconName == null) -> requestIconName(
+                repository, branchName, baseDirectory, context, iconFolder, onResult
+            )
+
+            else -> requestIconUrl(
+                repository, branchName, baseDirectory, context, iconFolder, iconName, onResult
+            )
         }
     }
 
     private fun requestIconFolder(
         repository: String,
         branchName: String,
+        baseDirectory: String,
         context: Context,
         onResult: (iconUrl: String) -> Unit
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
         val requestUrl =
-            "https://github.com/$repository/tree-commit-info/$branchName/app/src/main/res"
+            "https://github.com/$repository/tree-commit-info/$branchName/$baseDirectory/src/main/res"
 
         Log.d(TAG_DEBUG, "requestIconFolder::$repository -> $requestUrl")
         val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->
@@ -380,7 +409,7 @@ object GitHubRepoFetcher {
             }
 
             Log.d(TAG_DEBUG, "requestIconFolder::$requestUrl -> $folderName")
-            requestIcon(repository, branchName, context, folderName, null, onResult)
+            requestIcon(repository, branchName, baseDirectory, context, folderName, null, onResult)
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestIconFolder::ERROR::$requestUrl -> ${error.message}"
@@ -400,13 +429,14 @@ object GitHubRepoFetcher {
     private fun requestIconName(
         repository: String,
         branchName: String,
+        baseDirectory: String,
         context: Context,
         iconFolder: String,
         onResult: (iconUrl: String) -> Unit
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
         val requestUrl =
-            "https://github.com/$repository/raw/$branchName/app/src/main/AndroidManifest.xml"
+            "https://github.com/$repository/raw/$branchName/$baseDirectory/src/main/AndroidManifest.xml"
 
         Log.d(TAG_DEBUG, "requestIconLocation::$requestUrl")
         val manifestRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
@@ -424,7 +454,15 @@ object GitHubRepoFetcher {
                     val iconName = iconLocation.substringAfterLast("/")
 
                     Log.d(TAG_DEBUG, "requestIconLocation::$requestUrl -> $iconName")
-                    requestIcon(repository, branchName, context, iconFolder, iconName, onResult)
+                    requestIcon(
+                        repository,
+                        branchName,
+                        baseDirectory,
+                        context,
+                        iconFolder,
+                        iconName,
+                        onResult
+                    )
                 }
             }
         }, { error ->
@@ -432,7 +470,7 @@ object GitHubRepoFetcher {
                 TAG_DEBUG, "requestIconLocation::ERROR::$requestUrl -> ${error.message}"
             )
             // TODO: Handle error
-            requestIcon(repository, branchName, context, iconFolder, "", onResult)
+            requestIcon(repository, branchName, baseDirectory, context, iconFolder, "", onResult)
         })
         requestQueue.add(manifestRequest)
     }
@@ -440,6 +478,7 @@ object GitHubRepoFetcher {
     private fun requestIconUrl(
         repository: String,
         branchName: String,
+        baseDirectory: String,
         context: Context,
         iconFolder: String,
         iconName: String? = null,
@@ -447,7 +486,7 @@ object GitHubRepoFetcher {
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
         val requestUrl: String =
-            "https://github.com/$repository/tree-commit-info/$branchName/app/src/main/res/$iconFolder"
+            "https://github.com/$repository/tree-commit-info/$branchName/$baseDirectory/src/main/res/$iconFolder"
 
         Log.d(TAG_DEBUG, "requestIconUrl::$repository -> $requestUrl")
         val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->
@@ -462,7 +501,7 @@ object GitHubRepoFetcher {
                 name
             }
             val iconUrl =
-                "https://github.com/$repository/raw/$branchName/app/src/main/res/$iconFolder/$icon"
+                "https://github.com/$repository/raw/$branchName/$baseDirectory/src/main/res/$iconFolder/$icon"
 
             Log.d(TAG_DEBUG, "requestIconUrl::$requestUrl -> $iconUrl")
             onResult(iconUrl)

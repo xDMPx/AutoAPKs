@@ -82,11 +82,15 @@ class GitHubAPK(
     }
 
     private fun fetchIcon() {
+        val baseDirectory = apk.baseDirectory
+
         apk.repositoryDefaultBranch?.let { branchName ->
             if (apk.iconURL != null) {
                 return
             }
-            GitHubRepoFetcher.requestIcon(apk.repository, branchName, context) { iconUrl ->
+            GitHubRepoFetcher.requestIcon(
+                apk.repository, branchName, baseDirectory, context
+            ) { iconUrl ->
                 if (apk.iconURL != iconUrl) {
                     apk.iconURL = iconUrl
                     updateDatabase()
@@ -97,10 +101,12 @@ class GitHubAPK(
 
     private fun fetchAppInfo() {
         val repository = apk.repository
+        val baseDirectory = apk.baseDirectory
+
         apk.repositoryDefaultBranch?.let { branchName ->
             if (apk.applicationId == null) {
                 GitHubRepoFetcher.requestApplicationId(
-                    repository, branchName, context
+                    repository, branchName, baseDirectory, context
                 ) { applicationID ->
                     if (apk.applicationId != applicationID) {
                         apk.applicationId = applicationID
@@ -109,7 +115,9 @@ class GitHubAPK(
                 }
             }
             if (apk.applicationName == null) {
-                GitHubRepoFetcher.requestApplicationName(repository, branchName, context) { name ->
+                GitHubRepoFetcher.requestApplicationName(
+                    repository, branchName, baseDirectory, context
+                ) { name ->
                     if (apk.applicationName != name) {
                         apk.applicationName = name
                         updateDatabase()
