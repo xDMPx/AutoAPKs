@@ -330,11 +330,15 @@ object GitHubRepoFetcher {
                 Log.d(
                     TAG_DEBUG, "requestApplicationNameStrings::$requestUrl -> NO APP_NAME"
                 )
+                onResult("")
             }
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestApplicationNameStrings::ERROR::$requestUrl -> ${error.message}"
             )
+            if (error.networkResponse.statusCode == 404) {
+                onResult("")
+            }
             // TODO: Handle error
         })
         requestQueue.add(stringRequest)

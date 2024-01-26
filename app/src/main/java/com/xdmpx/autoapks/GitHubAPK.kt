@@ -104,7 +104,7 @@ class GitHubAPK(
         val baseDirectory = apk.baseDirectory
 
         apk.repositoryDefaultBranch?.let { branchName ->
-            if (apk.applicationId == null) {
+            if (apk.applicationId == null && (apk.applicationName == null || apk.applicationName!!.startsWith("."))) {
                 GitHubRepoFetcher.requestApplicationId(
                     repository, branchName, baseDirectory, context
                 ) { applicationID ->
@@ -164,7 +164,14 @@ class GitHubAPK(
 
     private fun deriveAppName(): String? {
         apk.applicationName?.let { name ->
-            if (!name.startsWith('.')) {
+            if (name.isBlank()){
+                if(apk.applicationId.isNullOrBlank()) return null
+                apk.applicationId?.let {
+                    return it
+                }
+
+            }
+            else if (!name.startsWith('.')) {
                 return name
             }
             apk.applicationId?.let {
