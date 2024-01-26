@@ -3,7 +3,6 @@ package com.xdmpx.autoapks
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -50,6 +49,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.coroutineScope
 import com.xdmpx.autoapks.Utils.CustomDialog
+import com.xdmpx.autoapks.Utils.ShortToast
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity
@@ -339,26 +339,17 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 if (it) {
                                     onAddRequest(repo, baseDirectory)
+                                    ShortToast(this@MainActivity, "Added $repo")
                                 } else {
-                                    Toast.makeText(
-                                        this@MainActivity,
-                                        "Invalid Android APP Repository",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    ShortToast(this@MainActivity, "Invalid Android APP Repository")
                                 }
                             }
                         } else {
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Android APP Repository already added",
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                            ShortToast(this@MainActivity, "Android APP Repository already added")
                         }
                     }
                     if (repo.isNullOrBlank()) {
-                        Toast.makeText(
-                            this@MainActivity, "Invalid Android APP Repository", Toast.LENGTH_SHORT
-                        ).show()
+                        ShortToast(this@MainActivity, "Invalid Android APP Repository")
                     }
                 }
                 onDismissRequest()
@@ -388,9 +379,7 @@ class MainActivity : ComponentActivity() {
                     outputStream.write(json.toString().toByteArray())
                 }
             } catch (e: Exception) {
-                Toast.makeText(
-                    this@MainActivity, "Error exporting data", Toast.LENGTH_SHORT
-                ).show()
+                ShortToast(this@MainActivity, "Error exporting data")
             }
         }
     }
@@ -422,9 +411,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         } catch (e: Exception) {
-            Toast.makeText(
-                this@MainActivity, "Error importing data", Toast.LENGTH_SHORT
-            ).show()
+            ShortToast(this@MainActivity, "Error importing data")
         }
     }
 
