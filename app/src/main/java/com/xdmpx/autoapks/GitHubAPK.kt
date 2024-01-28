@@ -10,15 +10,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.Button
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -48,6 +51,7 @@ import com.xdmpx.autoapks.ui.theme.getColorSchemeEx
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.intellij.lang.annotations.JdkConstants.BoxLayoutAxis
 
 class GitHubAPK(
     private val apk: GitHubAPKEntity,
@@ -364,6 +368,7 @@ class GitHubAPK(
 
     @Composable
     fun ApkDialog(onDismissRequest: () -> Unit) {
+
         CustomDialog(onDismissRequest) {
             Box(
                 modifier = Modifier
@@ -373,30 +378,48 @@ class GitHubAPK(
                 contentAlignment = Alignment.Center
             ) {
                 Column {
-                    apk.applicationPackageName?.let {
-                        TextButton(onClick = {
-                            Utils.uninstallApplication(context, it)
-                            onDismissRequest()
-                        }) {
-                            Text("Uninstall")
+                    LazyRow(modifier = Modifier.height(30.dp)) {
+                        item{
+                            ApkIcon()
+                        }
+                        item{
+                            Text(apk.repository)
                         }
                     }
-                    if (apk.applicationVersionCode != null && apkLink.value != null) {
-                        TextButton(onClick = {
-                            onDismissRequest()
-                            apkLink.value?.let { Utils.installApplication(context, it) }
-                        }) {
-                            Text("Reinstall")
-                        }
-                    }
-                    TextButton(onClick = {
-                        onDismissRequest()
-                        scope.launch { database.delete(apk) }
-                        onRemove(this@GitHubAPK)
-                    }) {
-                        Text("Remove")
-                    }
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Divider(thickness = 1.dp, color = getColorSchemeEx().colorScheme.outline)
+                    Spacer(modifier = Modifier.height(5.dp))
+                    ApkDialogButtons(onDismissRequest)
                 }
+            }
+        }
+    }
+
+    @Composable
+    fun ApkDialogButtons(onDismissRequest: () -> Unit, modifier: Modifier = Modifier) {
+        Column(modifier = modifier) {
+            apk.applicationPackageName?.let {
+                TextButton(onClick = {
+                    Utils.uninstallApplication(context, it)
+                    onDismissRequest()
+                }) {
+                    Text("Uninstall")
+                }
+            }
+            if (apk.applicationVersionCode != null && apkLink.value != null) {
+                TextButton(onClick = {
+                    onDismissRequest()
+                    apkLink.value?.let { Utils.installApplication(context, it) }
+                }) {
+                    Text("Reinstall")
+                }
+            }
+            TextButton(onClick = {
+                onDismissRequest()
+                scope.launch { database.delete(apk) }
+                onRemove(this@GitHubAPK)
+            }) {
+                Text("Remove")
             }
         }
     }
