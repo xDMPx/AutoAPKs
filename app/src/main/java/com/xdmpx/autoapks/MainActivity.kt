@@ -64,7 +64,7 @@ import java.time.LocalDate
 class MainActivity : ComponentActivity() {
     private val TAG_DEBUG = "MainActivity"
     private lateinit var database: GitHubAPKDao
-    private var apks = mutableStateListOf<GitHubAPK>()
+    private var apks = mutableStateListOf<GitHubAPK?>()
     private val createDocument =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
             export(
@@ -97,12 +97,9 @@ class MainActivity : ComponentActivity() {
             var apks = database.getAll()
 
             if (apks.isEmpty()) {
-                val element = GitHubAPKEntity("element-hq/element-x-android")
-                val wikipedia = GitHubAPKEntity("wikimedia/apps-android-wikipedia")
-                val duckduckgo = GitHubAPKEntity("duckduckgo/Android")
-                val syncthing = GitHubAPKEntity("syncthing/syncthing-android")
+                val autoapks = GitHubAPKEntity("xDMPx/AutoAPKs")
 
-                database.insertAll(element, wikipedia, duckduckgo, syncthing)
+                database.insertAll(autoapks)
                 apks = database.getAll()
             }
 
@@ -118,7 +115,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         Log.d(TAG_DEBUG, "onResume")
         apks.forEach {
-            it.refresh()
+            it?.refresh()
         }
     }
 
@@ -133,7 +130,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun removeAPKRepository(apk: GitHubAPK) {
-        apks.remove(apk)
+        apks[apks.indexOf(apk)] = null
     }
 
     @Composable
@@ -149,6 +146,7 @@ class MainActivity : ComponentActivity() {
                     .weight(apksColumnWeight)
             ) {
                 items(apks) { apk ->
+                    if (apk == null) return@items
                     Spacer(modifier = Modifier.size(10.dp))
                     apk.ApkCard()
                 }

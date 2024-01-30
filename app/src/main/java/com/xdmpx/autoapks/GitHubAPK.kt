@@ -64,7 +64,6 @@ class GitHubAPK(
     private var apkVersion: MutableState<String?> = mutableStateOf(apk.applicationVersionName)
     private var apkUpdate: MutableState<Boolean?> = mutableStateOf(apk.toUpdate)
     private var apkName: MutableState<String?> = mutableStateOf(deriveAppName())
-    private var recomposed = 0
     private val scope = CoroutineScope(Dispatchers.IO)
 
     init {
@@ -283,8 +282,6 @@ class GitHubAPK(
             ApkDialog(onDismissRequest = { showDialog.value = false })
         }
 
-        recomposed++
-        Log.d(TAG_DEBUG, "$recomposed")
     }
 
     @Composable
@@ -417,8 +414,10 @@ class GitHubAPK(
             }
             TextButton(onClick = {
                 onDismissRequest()
-                scope.launch { database.delete(apk) }
-                onRemove(this@GitHubAPK)
+                scope.launch {
+                    database.delete(apk)
+                    onRemove(this@GitHubAPK)
+                }
             }) {
                 Text("Remove")
             }
