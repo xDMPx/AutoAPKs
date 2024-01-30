@@ -51,7 +51,6 @@ import com.xdmpx.autoapks.ui.theme.getColorSchemeEx
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.intellij.lang.annotations.JdkConstants.BoxLayoutAxis
 
 class GitHubAPK(
     private val apk: GitHubAPKEntity,
@@ -108,7 +107,10 @@ class GitHubAPK(
         val baseDirectory = apk.baseDirectory
 
         apk.repositoryDefaultBranch?.let { branchName ->
-            if (apk.applicationId == null && (apk.applicationName == null || apk.applicationName!!.startsWith("."))) {
+            if (apk.applicationId == null && (apk.applicationName == null || apk.applicationName!!.startsWith(
+                    "."
+                ))
+            ) {
                 GitHubRepoFetcher.requestApplicationId(
                     repository, branchName, baseDirectory, context
                 ) { applicationID ->
@@ -168,14 +170,13 @@ class GitHubAPK(
 
     private fun deriveAppName(): String? {
         apk.applicationName?.let { name ->
-            if (name.isBlank()){
-                if(apk.applicationId.isNullOrBlank()) return null
+            if (name.isBlank()) {
+                if (apk.applicationId.isNullOrBlank()) return null
                 apk.applicationId?.let {
                     return it
                 }
 
-            }
-            else if (!name.startsWith('.')) {
+            } else if (!name.startsWith('.')) {
                 return name
             }
             apk.applicationId?.let {
@@ -379,10 +380,10 @@ class GitHubAPK(
             ) {
                 Column {
                     LazyRow(modifier = Modifier.height(30.dp)) {
-                        item{
+                        item {
                             ApkIcon()
                         }
-                        item{
+                        item {
                             Text(apk.repository)
                         }
                     }

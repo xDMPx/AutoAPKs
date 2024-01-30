@@ -8,7 +8,6 @@ import android.net.Uri
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -61,12 +60,16 @@ object Utils {
         Log.d(TAG_DEBUG, "getAppPackageName::$appName")
         val packageManager: PackageManager = context.packageManager
         val installedApplications = packageManager.getInstalledPackages(0)
+        val appID = appName.substringBeforeLast('.')
 
         for (appInfo in installedApplications) {
             if (appInfo.applicationInfo.name.isNullOrBlank() && appInfo.packageName.isNullOrBlank()) {
                 continue
             }
             if (appInfo.applicationInfo.name == appName || appInfo.packageName == appName) {
+                Log.d(TAG_DEBUG, "getAppPackageName::$appName ${appInfo.packageName}")
+                return appInfo.packageName
+            } else if (appInfo.applicationInfo.name == appID || appInfo.packageName == appID) {
                 Log.d(TAG_DEBUG, "getAppPackageName::$appName ${appInfo.packageName}")
                 return appInfo.packageName
             }
@@ -126,11 +129,9 @@ object Utils {
         }
     }
 
-    fun ShortToast(context: Context, text: CharSequence){
+    fun ShortToast(context: Context, text: CharSequence) {
         Toast.makeText(
-            context,
-            text,
-            Toast.LENGTH_SHORT
+            context, text, Toast.LENGTH_SHORT
         ).show()
     }
 

@@ -1,0 +1,112 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "b67623ccd454278e03d87b10b3e6f53a",
+    "entities": [
+      {
+        "tableName": "GitHubAPK",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`repository` TEXT NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `base_directory` TEXT NOT NULL, `repository_default_branch` TEXT, `icon_url` TEXT, `application_id` TEXT, `application_name` TEXT, `application_version_name` TEXT, `application_package_name` TEXT, `application_version_code` INTEGER, `release_commit` TEXT, `release_tag` TEXT, `release_link` TEXT, `to_update` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "repository",
+            "columnName": "repository",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseDirectory",
+            "columnName": "base_directory",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "repositoryDefaultBranch",
+            "columnName": "repository_default_branch",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "iconURL",
+            "columnName": "icon_url",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "applicationId",
+            "columnName": "application_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "applicationName",
+            "columnName": "application_name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "applicationVersionName",
+            "columnName": "application_version_name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "applicationPackageName",
+            "columnName": "application_package_name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "applicationVersionCode",
+            "columnName": "application_version_code",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "releaseCommit",
+            "columnName": "release_commit",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "releaseTag",
+            "columnName": "release_tag",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "releaseLink",
+            "columnName": "release_link",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "toUpdate",
+            "columnName": "to_update",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b67623ccd454278e03d87b10b3e6f53a')"
+    ]
+  }
+}
