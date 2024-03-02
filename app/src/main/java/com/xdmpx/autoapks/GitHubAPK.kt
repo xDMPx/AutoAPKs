@@ -42,6 +42,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.network.HttpException
 import com.xdmpx.autoapks.GitHubRepoFetcher.fetchDefaultRepoBranch
 import com.xdmpx.autoapks.Utils.CustomDialog
 import com.xdmpx.autoapks.database.GitHubAPKDao
@@ -340,13 +342,20 @@ class GitHubAPK(
                 .fillMaxHeight()
                 .padding(5.dp)
         ) {
-            AsyncImage(
-                model = apkIcon,
-                contentDescription = null,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .size(30.dp)
-            )
+            if (apkIcon != null) {
+                AsyncImage(
+                    model = apkIcon, contentDescription = null, onError = {
+                        Log.d(TAG_DEBUG, "AsyncImage failed: $apkIcon ${it.result.throwable}")
+                        if (it.result.throwable.toString().contains("404")) {
+                            Log.d(TAG_DEBUG, "Fetching new icon ${apkName.value}")
+                            apk.iconURL = null
+                            fetchIcon()
+                        }
+                    }, modifier = Modifier
+                        .clip(CircleShape)
+                        .size(30.dp)
+                )
+            }
         }
     }
 
