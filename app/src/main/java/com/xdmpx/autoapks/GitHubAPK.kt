@@ -21,7 +21,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -42,8 +42,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
-import coil.network.HttpException
 import com.xdmpx.autoapks.GitHubRepoFetcher.fetchDefaultRepoBranch
 import com.xdmpx.autoapks.Utils.CustomDialog
 import com.xdmpx.autoapks.database.GitHubAPKDao
@@ -394,7 +392,9 @@ class GitHubAPK(
                         }
                     }
                     Spacer(modifier = Modifier.height(5.dp))
-                    Divider(thickness = 1.dp, color = getColorSchemeEx().colorScheme.outline)
+                    HorizontalDivider(
+                        thickness = 1.dp, color = getColorSchemeEx().colorScheme.outline
+                    )
                     Spacer(modifier = Modifier.height(5.dp))
                     ApkDialogButtons(onDismissRequest)
                 }
