@@ -35,6 +35,9 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.xdmpx.autoapks.ApkUI.AnnotatedClickableText
+import com.xdmpx.autoapks.ApkUI.ApkIcon
+import com.xdmpx.autoapks.ApkUI.ApkInfo
+import com.xdmpx.autoapks.ApkUI.ApkInfoData
 import com.xdmpx.autoapks.ApkUI.InstallButton
 import com.xdmpx.autoapks.ApkUI.UpdateButton
 import com.xdmpx.autoapks.GitHubRepoFetcher.fetchDefaultRepoBranch
@@ -257,6 +260,8 @@ class GitHubAPK(
     fun ApkCard(modifier: Modifier = Modifier) {
         val showDialog = remember { mutableStateOf(false) }
         val haptics = LocalHapticFeedback.current
+        val apkName by remember { apkName }
+        val apkIcon by remember { apkIcon }
 
         Row(
             modifier
@@ -269,7 +274,11 @@ class GitHubAPK(
                     showDialog.value = true
                 })
         ) {
-            ApkInfo(modifier.weight(0.75f))
+            ApkInfo(apkName, apk.repository, apkIcon, modifier.weight(0.75f)) {
+                Log.d(TAG_DEBUG, "Fetching new icon {apkName.value}")
+                apk.iconURL = null
+                fetchIcon()
+            }
             ApkVersionControl(modifier.weight(0.25f))
         }
 
@@ -277,22 +286,6 @@ class GitHubAPK(
             ApkDialog(onDismissRequest = { showDialog.value = false })
         }
 
-    }
-
-    @Composable
-    fun ApkInfo(modifier: Modifier = Modifier) {
-        Column(
-            modifier.fillMaxSize()
-        ) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .height(IntrinsicSize.Max)
-            ) {
-                ApkIcon()
-                ApkInfoData()
-            }
-        }
     }
 
     @Composable
@@ -327,47 +320,8 @@ class GitHubAPK(
     }
 
     @Composable
-    fun ApkIcon(modifier: Modifier = Modifier) {
-        val apkIcon by remember { apkIcon }
-
-        Box(
-            contentAlignment = Alignment.Center, modifier = modifier
-                .fillMaxHeight()
-                .padding(5.dp)
-        ) {
-            if (apkIcon != null) {
-                AsyncImage(
-                    model = apkIcon, contentDescription = null, onError = {
-                        Log.d(TAG_DEBUG, "AsyncImage failed: $apkIcon ${it.result.throwable}")
-                        if (it.result.throwable.toString().contains("404")) {
-                            Log.d(TAG_DEBUG, "Fetching new icon ${apkName.value}")
-                            apk.iconURL = null
-                            fetchIcon()
-                        }
-                    }, modifier = Modifier
-                        .clip(CircleShape)
-                        .size(30.dp)
-                )
-            }
-        }
-    }
-
-    @Composable
-    fun ApkInfoData(modifier: Modifier = Modifier) {
-        val apkName by remember { apkName }
-
-        Box(modifier = modifier.fillMaxHeight()) {
-            Column {
-                val url = "https://github.com/${apk.repository}"
-                AnnotatedClickableText(apk.repository, url)
-                apkName?.let { Text(it, Modifier) }
-            }
-
-        }
-    }
-
-    @Composable
     fun ApkDialog(onDismissRequest: () -> Unit) {
+        val apkIcon by remember { apkIcon }
 
         CustomDialog(onDismissRequest) {
             Box(
@@ -380,7 +334,11 @@ class GitHubAPK(
                 Column {
                     LazyRow(modifier = Modifier.height(30.dp)) {
                         item {
-                            ApkIcon()
+                            ApkIcon(apkIcon) {
+                                Log.d(TAG_DEBUG, "Fetching new icon {apkName.value}")
+                                apk.iconURL = null
+                                fetchIcon()
+                            }
                         }
                         item {
                             Text(apk.repository)
