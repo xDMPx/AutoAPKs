@@ -1,8 +1,6 @@
 package com.xdmpx.autoapks
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -11,14 +9,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,17 +23,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.xdmpx.autoapks.ApkUI.AnnotatedClickableText
 import com.xdmpx.autoapks.ApkUI.ApkIcon
 import com.xdmpx.autoapks.ApkUI.ApkInfo
-import com.xdmpx.autoapks.ApkUI.ApkInfoData
-import com.xdmpx.autoapks.ApkUI.InstallButton
-import com.xdmpx.autoapks.ApkUI.UpdateButton
+import com.xdmpx.autoapks.ApkUI.ApkVersionControl
 import com.xdmpx.autoapks.GitHubRepoFetcher.fetchDefaultRepoBranch
 import com.xdmpx.autoapks.Utils.CustomDialog
 import com.xdmpx.autoapks.database.GitHubAPKDao
@@ -262,6 +251,9 @@ class GitHubAPK(
         val haptics = LocalHapticFeedback.current
         val apkName by remember { apkName }
         val apkIcon by remember { apkIcon }
+        val apkLink by remember { apkLink }
+        val apkVersion by remember { apkVersion }
+        val apkUpdate by remember { apkUpdate }
 
         Row(
             modifier
@@ -279,44 +271,13 @@ class GitHubAPK(
                 apk.iconURL = null
                 fetchIcon()
             }
-            ApkVersionControl(modifier.weight(0.25f))
+            ApkVersionControl(apkLink, apkVersion, apkUpdate, modifier.weight(0.25f))
         }
 
         if (showDialog.value) {
             ApkDialog(onDismissRequest = { showDialog.value = false })
         }
 
-    }
-
-    @Composable
-    fun ApkVersionControl(modifier: Modifier = Modifier) {
-        val apkLink by remember { apkLink }
-        val apkVersion by remember { apkVersion }
-        val apkUpdate by remember { apkUpdate }
-
-        Box(
-            modifier.fillMaxSize()
-        ) {
-            if (apkVersion.isNullOrEmpty()) {
-                Box(
-                    contentAlignment = Alignment.CenterEnd, modifier = Modifier.fillMaxSize()
-                ) {
-                    apkLink?.let { InstallButton(it) }
-                }
-            } else if (apkUpdate == true) {
-                Box(
-                    contentAlignment = Alignment.CenterEnd, modifier = Modifier.fillMaxSize()
-                ) {
-                    apkLink?.let { UpdateButton(it) }
-                }
-            } else {
-                Box(
-                    contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()
-                ) {
-                    apkVersion?.let { Text(it) }
-                }
-            }
-        }
     }
 
     @Composable

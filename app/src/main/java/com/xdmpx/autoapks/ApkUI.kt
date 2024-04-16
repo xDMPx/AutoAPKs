@@ -96,6 +96,35 @@ object ApkUI {
     }
 
     @Composable
+    fun ApkVersionControl(
+        apkLink: String?, apkVersion: String?, apkUpdate: Boolean?, modifier: Modifier = Modifier
+    ) {
+        Box(
+            modifier.fillMaxSize()
+        ) {
+            if (apkVersion.isNullOrEmpty()) {
+                Box(
+                    contentAlignment = Alignment.CenterEnd, modifier = Modifier.fillMaxSize()
+                ) {
+                    apkLink?.let { InstallButton(it) }
+                }
+            } else if (apkUpdate == true) {
+                Box(
+                    contentAlignment = Alignment.CenterEnd, modifier = Modifier.fillMaxSize()
+                ) {
+                    apkLink?.let { UpdateButton(it) }
+                }
+            } else {
+                Box(
+                    contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()
+                ) {
+                    Text(apkVersion)
+                }
+            }
+        }
+    }
+
+    @Composable
     fun InstallButton(apkLink: String, modifier: Modifier = Modifier) {
         val context = LocalContext.current
         Button(onClick = {
