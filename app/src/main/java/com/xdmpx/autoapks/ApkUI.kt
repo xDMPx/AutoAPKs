@@ -7,16 +7,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import com.xdmpx.autoapks.ui.theme.getColorSchemeEx
+import kotlinx.coroutines.Job
 
 object ApkUI {
 
@@ -91,6 +96,89 @@ object ApkUI {
                         .clip(CircleShape)
                         .size(30.dp)
                 )
+            }
+        }
+    }
+
+    @Composable
+    fun ApkDialog(
+        apkIcon: String?,
+        repository: String,
+        applicationPackageName: String?,
+        applicationVersionCode: Long?,
+        apkLink: String?,
+        onDismissRequest: () -> Unit,
+        onRemoveRequest: () -> Job,
+        fetchNewIcon: () -> Unit
+    ) {
+
+        Utils.CustomDialog(onDismissRequest) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Max)
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column {
+                    LazyRow(modifier = Modifier.height(30.dp)) {
+                        item {
+                            ApkIcon(apkIcon, fetchNewIcon = fetchNewIcon)
+                        }
+                        item {
+                            Text(repository)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(5.dp))
+                    HorizontalDivider(
+                        thickness = 1.dp, color = getColorSchemeEx().colorScheme.outline
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
+                    ApkDialogButtons(
+                        applicationPackageName,
+                        applicationVersionCode,
+                        apkLink,
+                        onDismissRequest,
+                        onRemoveRequest = onRemoveRequest
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun ApkDialogButtons(
+        applicationPackageName: String?,
+        applicationVersionCode: Long?,
+        apkLink: String?,
+        onDismissRequest: () -> Unit,
+        modifier: Modifier = Modifier,
+        onRemoveRequest: () -> Job,
+    ) {
+        val context = LocalContext.current
+
+        Column(modifier = modifier) {
+            applicationPackageName?.let {
+                TextButton(onClick = {
+                    Utils.uninstallApplication(context, it)
+                    onDismissRequest()
+                }) {
+                    Text("Uninstall")
+                }
+            }
+            if (applicationVersionCode != null && apkLink != null) {
+                TextButton(onClick = {
+                    onDismissRequest()
+                    apkLink.let { Utils.installApplication(context, it) }
+                }) {
+                    Text("Reinstall")
+                }
+            }
+            TextButton(onClick = {
+                onDismissRequest()
+                onRemoveRequest()
+            }) {
+                Text("Remove")
             }
         }
     }
