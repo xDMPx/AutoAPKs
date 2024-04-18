@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import com.xdmpx.autoapks.ApkUI.ApkDialog
 import com.xdmpx.autoapks.ApkUI.ApkInfo
@@ -29,7 +30,7 @@ import kotlinx.coroutines.launch
 
 class GitHubAPK(
     private val apk: GitHubAPKEntity,
-    private val context: Context,
+    context: Context,
     private val onRemove: (gitHubAPK: GitHubAPK) -> Unit
 ) {
     private val TAG_DEBUG = "GitHubAPK"
@@ -46,19 +47,19 @@ class GitHubAPK(
         if (apk.repositoryDefaultBranch.isNullOrBlank()) {
             fetchDefaultRepoBranch(apk.repository, context) {
                 apk.repositoryDefaultBranch = it
-                updateDatabase()
-                fetchIcon()
-                fetchCurrentRelease()
-                fetchAppInfo()
+                updateDatabase(context)
+                fetchIcon(context)
+                fetchCurrentRelease(context)
+                fetchAppInfo(context)
             }
         } else {
-            fetchIcon()
-            fetchCurrentRelease()
-            fetchAppInfo()
+            fetchIcon(context)
+            fetchCurrentRelease(context)
+            fetchAppInfo(context)
         }
     }
 
-    private fun fetchIcon() {
+    private fun fetchIcon(context: Context) {
         val baseDirectory = apk.baseDirectory
 
         apk.repositoryDefaultBranch?.let { branchName ->
@@ -70,13 +71,13 @@ class GitHubAPK(
             ) { iconUrl ->
                 if (apk.iconURL != iconUrl) {
                     apk.iconURL = iconUrl
-                    updateDatabase()
+                    updateDatabase(context)
                 }
             }
         }
     }
 
-    private fun fetchAppInfo() {
+    private fun fetchAppInfo(context: Context) {
         val repository = apk.repository
         val baseDirectory = apk.baseDirectory
 
@@ -90,7 +91,7 @@ class GitHubAPK(
                 ) { applicationID ->
                     if (apk.applicationId != applicationID) {
                         apk.applicationId = applicationID
-                        updateDatabase()
+                        updateDatabase(context)
                     }
                 }
             }
@@ -100,16 +101,16 @@ class GitHubAPK(
                 ) { name ->
                     if (apk.applicationName != name) {
                         apk.applicationName = name
-                        updateDatabase()
+                        updateDatabase(context)
                     }
                 }
             }
         }
-        setPackageName()
-        setInstalledApplicationVersion()
+        setPackageName(context)
+        setInstalledApplicationVersion(context)
     }
 
-    private fun fetchCurrentRelease() {
+    private fun fetchCurrentRelease(context: Context) {
         GitHubRepoFetcher.requestLatestRelease(
             apk.repository, context
         ) { releaseCommit, releaseTag ->
@@ -118,28 +119,28 @@ class GitHubAPK(
                     apk.toUpdate = true
                 }
                 apk.releaseCommit = releaseCommit
-                updateDatabase()
+                updateDatabase(context)
             }
             if (apk.releaseTag != releaseTag) {
                 apk.releaseTag = releaseTag
-                updateDatabase()
+                updateDatabase(context)
 
                 GitHubRepoFetcher.requestLatestReleaseAssets(
                     apk.repository, releaseTag, context
                 ) { apkURL ->
                     if (apk.releaseLink != apkURL) {
                         apk.releaseLink = apkURL
-                        updateDatabase()
+                        updateDatabase(context)
                     }
                 }
             }
         }
     }
 
-    public fun refresh() {
-        setPackageName()
-        setInstalledApplicationVersion()
-        fetchCurrentRelease()
+    public fun refresh(context: Context) {
+        setPackageName(context)
+        setInstalledApplicationVersion(context)
+        fetchCurrentRelease(context)
     }
 
     private fun deriveAppName(): String? {
@@ -163,19 +164,19 @@ class GitHubAPK(
         return null
     }
 
-    private fun updateDatabase() {
+    private fun updateDatabase(context: Context) {
         apkIcon.value = apk.iconURL
         apkLink.value = apk.releaseLink
         apkName.value = deriveAppName()
         apkVersion.value = apk.applicationVersionName
         apkUpdate.value = apk.toUpdate
-        setPackageName()
-        setInstalledApplicationVersion()
+        setPackageName(context)
+        setInstalledApplicationVersion(context)
         scope.launch { database.update(apk) }
     }
 
-    private fun setPackageName() {
-        setInstallState()
+    private fun setPackageName(context: Context) {
+        setInstallState(context)
         if (apk.applicationPackageName != null) {
             return
         }
@@ -186,12 +187,12 @@ class GitHubAPK(
             Log.d(TAG_DEBUG, "setPackageName:$name -> $packageName")
             if (apk.applicationPackageName != packageName) {
                 apk.applicationPackageName = packageName
-                updateDatabase()
+                updateDatabase(context)
             }
         }
     }
 
-    private fun setInstallState() {
+    private fun setInstallState(context: Context) {
         Log.d(TAG_DEBUG, "setInstallState::${deriveAppName()}")
         apk.applicationPackageName?.let { packageName ->
             val installed = Utils.isAppInstalled(context, packageName)
@@ -200,12 +201,12 @@ class GitHubAPK(
                 apk.applicationPackageName = null
                 apk.applicationVersionCode = null
                 apk.applicationVersionName = null
-                updateDatabase()
+                updateDatabase(context)
             }
         }
     }
 
-    private fun setInstalledApplicationVersion() {
+    private fun setInstalledApplicationVersion(context: Context) {
         val packageName = apk.applicationPackageName
         Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$packageName")
         packageName?.let {
@@ -226,7 +227,7 @@ class GitHubAPK(
                 update = true
             }
             if (update) {
-                updateDatabase()
+                updateDatabase(context)
             }
 
         }
@@ -237,15 +238,17 @@ class GitHubAPK(
     fun ApkCard(modifier: Modifier = Modifier) {
         val showDialog = remember { mutableStateOf(false) }
         val haptics = LocalHapticFeedback.current
+        val context = LocalContext.current
         val apkName by remember { apkName }
         val apkIcon by remember { apkIcon }
         val apkLink by remember { apkLink }
         val apkVersion by remember { apkVersion }
         val apkUpdate by remember { apkUpdate }
+
         val fetchNewIcon = {
             Log.d(TAG_DEBUG, "Fetching new icon {apkName.value}")
             apk.iconURL = null
-            fetchIcon()
+            fetchIcon(context)
         }
         val onRemoveRequest = {
             scope.launch {
@@ -283,6 +286,5 @@ class GitHubAPK(
         }
 
     }
-
 
 }

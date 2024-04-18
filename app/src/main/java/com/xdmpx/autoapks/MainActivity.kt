@@ -115,7 +115,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         Log.d(TAG_DEBUG, "onResume")
         apks.forEach {
-            it?.refresh()
+            it?.refresh(this@MainActivity)
         }
     }
 
