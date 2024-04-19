@@ -2,44 +2,41 @@ package com.xdmpx.autoapks
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
-import com.xdmpx.autoapks.ApkUI.ApkDialog
-import com.xdmpx.autoapks.ApkUI.ApkInfo
-import com.xdmpx.autoapks.ApkUI.ApkVersionControl
+import androidx.lifecycle.ViewModel
 import com.xdmpx.autoapks.GitHubRepoFetcher.fetchDefaultRepoBranch
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+
+data class GitHubAPKState(
+    val apkName: String?,
+    val apkIcon: String?,
+    val apkLink: String?,
+    val apkVersion: String?,
+    val apkUpdate: Boolean?,
+)
+
 class GitHubAPK(
-    private val apk: GitHubAPKEntity,
+    val apk: GitHubAPKEntity,
     context: Context,
     private val onRemove: (gitHubAPK: GitHubAPK) -> Unit
-) {
+) : ViewModel() {
+    private val _apkState = MutableStateFlow(
+        GitHubAPKState(
+            deriveAppName(), apk.iconURL, apk.releaseLink, apk.applicationVersionName, apk.toUpdate
+        )
+    )
+    val apkState: StateFlow<GitHubAPKState> = _apkState.asStateFlow()
     private val TAG_DEBUG = "GitHubAPK"
     private var database: GitHubAPKDao
-    private var apkIcon: MutableState<String?> = mutableStateOf(apk.iconURL)
-    private var apkLink: MutableState<String?> = mutableStateOf(apk.releaseLink)
-    private var apkVersion: MutableState<String?> = mutableStateOf(apk.applicationVersionName)
-    private var apkUpdate: MutableState<Boolean?> = mutableStateOf(apk.toUpdate)
-    private var apkName: MutableState<String?> = mutableStateOf(deriveAppName())
+
     private val scope = CoroutineScope(Dispatchers.IO)
 
     init {
@@ -165,11 +162,9 @@ class GitHubAPK(
     }
 
     private fun updateDatabase(context: Context) {
-        apkIcon.value = apk.iconURL
-        apkLink.value = apk.releaseLink
-        apkName.value = deriveAppName()
-        apkVersion.value = apk.applicationVersionName
-        apkUpdate.value = apk.toUpdate
+        _apkState.value = GitHubAPKState(
+            deriveAppName(), apk.iconURL, apk.releaseLink, apk.applicationVersionName, apk.toUpdate
+        )
         setPackageName(context)
         setInstalledApplicationVersion(context)
         scope.launch { database.update(apk) }
@@ -180,7 +175,7 @@ class GitHubAPK(
         if (apk.applicationPackageName != null) {
             return
         }
-        val name = apkName.value
+        val name = _apkState.value.apkName
         Log.d(TAG_DEBUG, "setPackageName::${deriveAppName()}::$name")
         name?.let {
             val packageName = Utils.getAppPackageName(context, it)
@@ -233,58 +228,16 @@ class GitHubAPK(
         }
     }
 
-    @OptIn(ExperimentalFoundationApi::class)
-    @Composable
-    fun ApkCard(modifier: Modifier = Modifier) {
-        val showDialog = remember { mutableStateOf(false) }
-        val haptics = LocalHapticFeedback.current
-        val context = LocalContext.current
-        val apkName by remember { apkName }
-        val apkIcon by remember { apkIcon }
-        val apkLink by remember { apkLink }
-        val apkVersion by remember { apkVersion }
-        val apkUpdate by remember { apkUpdate }
-
-        val fetchNewIcon = {
-            Log.d(TAG_DEBUG, "Fetching new icon {apkName.value}")
-            apk.iconURL = null
-            fetchIcon(context)
+    val fetchNewIcon = {
+        Log.d(TAG_DEBUG, "Fetching new icon {apkName.value}")
+        apk.iconURL = null
+        fetchIcon(context)
+    }
+    val onRemoveRequest = {
+        scope.launch {
+            database.delete(apk)
+            onRemove(this@GitHubAPK)
         }
-        val onRemoveRequest = {
-            scope.launch {
-                database.delete(apk)
-                onRemove(this@GitHubAPK)
-            }
-        }
-
-        Row(
-            modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Max)
-                .combinedClickable(onClick = {
-                    apk.applicationPackageName?.let { Utils.openApplicationInfo(context, it) }
-                }, onLongClick = {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    showDialog.value = true
-                })
-        ) {
-            ApkInfo(apkName, apk.repository, apkIcon, modifier.weight(0.75f), fetchNewIcon)
-            ApkVersionControl(apkLink, apkVersion, apkUpdate, modifier.weight(0.25f))
-        }
-
-        if (showDialog.value) {
-            ApkDialog(
-                apkIcon,
-                apk.repository,
-                apk.applicationPackageName,
-                apk.applicationVersionCode,
-                apkLink,
-                onDismissRequest = { showDialog.value = false },
-                onRemoveRequest = onRemoveRequest,
-                fetchNewIcon
-            )
-        }
-
     }
 
 }

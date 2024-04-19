@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.coroutineScope
+import com.xdmpx.autoapks.ApkUI.ApkCard
 import com.xdmpx.autoapks.Utils.CustomDialog
 import com.xdmpx.autoapks.Utils.ShortToast
 import com.xdmpx.autoapks.database.GitHubAPKDao
@@ -148,7 +149,7 @@ class MainActivity : ComponentActivity() {
                 items(apks) { apk ->
                     if (apk == null) return@items
                     Spacer(modifier = Modifier.size(10.dp))
-                    apk.ApkCard()
+                    ApkCard(apk)
                 }
             }
             AddAPKRepository(

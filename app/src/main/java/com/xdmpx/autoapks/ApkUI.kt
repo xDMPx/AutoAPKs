@@ -3,6 +3,8 @@ package com.xdmpx.autoapks
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -22,10 +24,16 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +48,54 @@ import kotlinx.coroutines.Job
 object ApkUI {
 
     private val TAG_DEBUG = "ApkUI"
+
+    @OptIn(ExperimentalFoundationApi::class)
+    @Composable
+    fun ApkCard(gitHubAPKViewModel: GitHubAPK, modifier: Modifier = Modifier) {
+        val apkState by gitHubAPKViewModel.apkState.collectAsState()
+        val apk = gitHubAPKViewModel.apk
+
+        val showDialog = remember { mutableStateOf(false) }
+        val haptics = LocalHapticFeedback.current
+        val context = LocalContext.current
+
+        Row(
+            modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Max)
+                .combinedClickable(onClick = {
+                    apk.applicationPackageName?.let { Utils.openApplicationInfo(context, it) }
+                }, onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    showDialog.value = true
+                })
+        ) {
+            ApkInfo(
+                apkState.apkName,
+                apk.repository,
+                apkState.apkIcon,
+                modifier.weight(0.75f),
+                gitHubAPKViewModel.fetchNewIcon
+            )
+            ApkVersionControl(
+                apkState.apkLink, apkState.apkVersion, apkState.apkUpdate, modifier.weight(0.25f)
+            )
+        }
+
+        if (showDialog.value) {
+            ApkDialog(
+                apkState.apkIcon,
+                apk.repository,
+                apk.applicationPackageName,
+                apk.applicationVersionCode,
+                apkState.apkLink,
+                onDismissRequest = { showDialog.value = false },
+                onRemoveRequest = gitHubAPKViewModel.onRemoveRequest,
+                gitHubAPKViewModel.fetchNewIcon
+            )
+        }
+
+    }
 
     @Composable
     fun ApkInfo(
