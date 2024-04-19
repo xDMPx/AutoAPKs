@@ -24,9 +24,7 @@ data class GitHubAPKState(
 )
 
 class GitHubAPK(
-    val apk: GitHubAPKEntity,
-    context: Context,
-    private val onRemove: (gitHubAPK: GitHubAPK) -> Unit
+    val apk: GitHubAPKEntity, context: Context, private val onRemove: (gitHubAPK: GitHubAPK) -> Unit
 ) : ViewModel() {
     private val _apkState = MutableStateFlow(
         GitHubAPKState(
@@ -214,14 +212,20 @@ class GitHubAPK(
             if (apk.applicationVersionCode != versionCode) {
                 Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$packageName -> UPDATE DETECTED")
                 apk.applicationVersionCode = versionCode
-                apk.toUpdate = false
                 update = true
             }
             if (apk.applicationVersionName != versionName) {
+                Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$packageName -> UPDATE DETECTED")
                 apk.applicationVersionName = versionName
                 update = true
             }
+            val releaseTag = apk.releaseTag?.removePrefix("v")
+            if (apk.toUpdate && ((apk.applicationVersionName == releaseTag) || (apk.applicationVersionCode.toString() == releaseTag))) {
+                Log.d(TAG_DEBUG, "setInstalledApplicationVersion::$packageName -> UPDATE DETECTED")
+                update = true
+            }
             if (update) {
+                apk.toUpdate = false
                 updateDatabase(context)
             }
 
