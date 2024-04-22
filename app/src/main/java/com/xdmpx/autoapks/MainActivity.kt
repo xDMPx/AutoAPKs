@@ -99,8 +99,9 @@ class MainActivity : ComponentActivity() {
 
             if (apks.isEmpty()) {
                 val autoapks = GitHubAPKEntity("xDMPx/AutoAPKs")
+                val normscount = GitHubAPKEntity("xDMPx/NormsCount")
 
-                database.insertAll(autoapks)
+                database.insertAll(autoapks, normscount)
                 apks = database.getAll()
             }
 
