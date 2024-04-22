@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">AutoAPKs</string>
+
+    <string name="about_screen">About</string>
+    <string name="about_app_description">A simple tool to automate apk files dowland.</string>
+
+    <string name="about_version">Version</string>
+    <string name="about_source_code">Source code</string>
+    <string name="about_author">Author</string>
+    <string name="about_license">License</string>
+
+    <string name="about_source_code_url">https://github.com/xDMPx/AutoAPKs</string>
+    <string name="about_license_url">"https://github.com/xDMPx/AutoAPKs/blob/main/LICENSE"</string>
+    <string name="about_author_url">https://github.com/xDMPx</string>
 </resources>

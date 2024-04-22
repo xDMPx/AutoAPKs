@@ -51,6 +51,7 @@ import androidx.lifecycle.coroutineScope
 import com.xdmpx.autoapks.ApkUI.ApkCard
 import com.xdmpx.autoapks.Utils.CustomDialog
 import com.xdmpx.autoapks.Utils.ShortToast
+import com.xdmpx.autoapks.about.About
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity
@@ -66,6 +67,7 @@ class MainActivity : ComponentActivity() {
     private val TAG_DEBUG = "MainActivity"
     private lateinit var database: GitHubAPKDao
     private var apks = mutableStateListOf<GitHubAPK?>()
+    private var about = mutableStateOf(false)
     private val createDocument =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
             export(
@@ -83,10 +85,16 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    Scaffold(
-                        topBar = { TopAppBar() },
-                    ) { innerPadding ->
-                        Main(Modifier.padding(innerPadding))
+                    if (!about.value) {
+                        Scaffold(
+                            topBar = { TopAppBar() },
+                        ) { innerPadding ->
+                            Main(Modifier.padding(innerPadding))
+                        }
+                    } else {
+                        About.AboutUI {
+                            about.value = false
+                        }
                     }
                 }
             }
@@ -196,6 +204,10 @@ class MainActivity : ComponentActivity() {
             DropdownMenuItem(text = { Text(text = "Import") }, onClick = {
                 expanded = false
                 openDocument.launch(arrayOf("application/json"))
+            })
+            DropdownMenuItem(text = { Text(text = "About") }, onClick = {
+                expanded = false
+                about.value = true
             })
         }
 
