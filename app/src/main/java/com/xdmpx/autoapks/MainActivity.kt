@@ -48,6 +48,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.coroutineScope
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.xdmpx.autoapks.ApkUI.ApkCard
 import com.xdmpx.autoapks.Utils.CustomDialog
 import com.xdmpx.autoapks.Utils.ShortToast
@@ -67,7 +70,6 @@ class MainActivity : ComponentActivity() {
     private val TAG_DEBUG = "MainActivity"
     private lateinit var database: GitHubAPKDao
     private var apks = mutableStateListOf<GitHubAPK?>()
-    private var about = mutableStateOf(false)
     private val createDocument =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
             export(
@@ -85,15 +87,17 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    if (!about.value) {
-                        Scaffold(
-                            topBar = { TopAppBar() },
-                        ) { innerPadding ->
-                            Main(Modifier.padding(innerPadding))
+                    val navController = rememberNavController()
+                    NavHost(navController = navController, startDestination = "main") {
+                        composable("main") {
+                            MainUI() {
+                                navController.navigate("about")
+                            }
                         }
-                    } else {
-                        About.AboutUI {
-                            about.value = false
+                        composable("about") {
+                            About.AboutUI {
+                                navController.navigate("main")
+                            }
                         }
                     }
                 }
@@ -144,6 +148,17 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
+    fun MainUI(
+        onNavigateToAbout: () -> Unit
+    ) {
+        Scaffold(
+            topBar = { TopAppBar(onNavigateToAbout) },
+        ) { innerPadding ->
+            Main(Modifier.padding(innerPadding))
+        }
+    }
+
+    @Composable
     @Preview
     fun Main(modifier: Modifier = Modifier) {
         val apks = remember { apks }
@@ -173,17 +188,17 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun TopAppBar() {
+    fun TopAppBar(onNavigateToAbout: () -> Unit) {
         TopAppBar(colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background,
             titleContentColor = MaterialTheme.colorScheme.primary,
         ), title = { Text("AutoAPKs") }, actions = {
-            TopAppBarMenu()
+            TopAppBarMenu(onNavigateToAbout)
         })
     }
 
     @Composable
-    fun TopAppBarMenu() {
+    fun TopAppBarMenu(onNavigateToAbout: () -> Unit) {
         var expanded by remember { mutableStateOf(false) }
 
         IconButton(onClick = { expanded = !expanded }) {
@@ -207,7 +222,7 @@ class MainActivity : ComponentActivity() {
             })
             DropdownMenuItem(text = { Text(text = "About") }, onClick = {
                 expanded = false
-                about.value = true
+                onNavigateToAbout()
             })
         }
 
