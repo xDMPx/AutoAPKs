@@ -57,13 +57,18 @@ private val lightColorSchemeEx = ColorSchemeEx(
 @Composable
 fun AutoAPKsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    pureDarkTheme: Boolean = false,
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true, content: @Composable () -> Unit
+    dynamicColor: Boolean = true, content: @Composable () -> Unit,
 ) {
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            var dynamicTheme =
+                if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (darkTheme && pureDarkTheme) dynamicTheme =
+                dynamicTheme.copy(background = Color.Black, surface = Color.Black)
+            dynamicTheme
         }
 
         darkTheme -> DarkColorScheme

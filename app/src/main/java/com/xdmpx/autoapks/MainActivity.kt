@@ -58,6 +58,8 @@ import com.xdmpx.autoapks.about.About
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity
+import com.xdmpx.autoapks.settings.Settings
+import com.xdmpx.autoapks.settings.SettingsUI
 import com.xdmpx.autoapks.ui.theme.AutoAPKsTheme
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -68,6 +70,8 @@ import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
     private val TAG_DEBUG = "MainActivity"
+    private val settingsInstance = Settings.getInstance()
+    private var usePureDark = mutableStateOf(false)
     private lateinit var database: GitHubAPKDao
     private var apks = mutableStateListOf<GitHubAPK?>()
     private val createDocument =
@@ -79,10 +83,16 @@ class MainActivity : ComponentActivity() {
     private val openDocument =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> import(uri) }
 
+    init {
+        settingsInstance.registerOnThemeUpdate { usePureDark ->
+            this@MainActivity.usePureDark.value = usePureDark
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            AutoAPKsTheme {
+            AutoAPKsTheme(pureDarkTheme = usePureDark.value) {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
@@ -90,8 +100,14 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     NavHost(navController = navController, startDestination = "main") {
                         composable("main") {
-                            MainUI() {
-                                navController.navigate("about")
+                            MainUI(onNavigateToSettings = { navController.navigate("settings") },
+                                onNavigateToAbout = {
+                                    navController.navigate("about")
+                                })
+                        }
+                        composable("settings") {
+                            SettingsUI.SettingsUI(settingsInstance) {
+                                navController.navigate("main")
                             }
                         }
                         composable("about") {
@@ -107,6 +123,10 @@ class MainActivity : ComponentActivity() {
         database = GitHubAPKDatabase.getInstance(this).gitHubAPKDatabase
 
         this.lifecycle.coroutineScope.launch {
+            settingsInstance.loadSettings(this@MainActivity)
+            val settings = settingsInstance.settingsState.value
+            usePureDark.value = settings.usePureDark
+
             var apks = database.getAll()
 
             if (apks.isEmpty()) {
@@ -133,6 +153,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStop() {
+        this.lifecycle.coroutineScope.launch {
+            settingsInstance.saveSettings(this@MainActivity)
+        }
+        super.onStop()
+    }
+
     private fun addAPKRepository(repository: String, baseDirectory: String) {
         this.lifecycle.coroutineScope.launch {
             val apk = GitHubAPKEntity(repository, baseDirectory = baseDirectory)
@@ -149,10 +176,11 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun MainUI(
-        onNavigateToAbout: () -> Unit
+        onNavigateToAbout: () -> Unit,
+        onNavigateToSettings: () -> Unit,
     ) {
         Scaffold(
-            topBar = { TopAppBar(onNavigateToAbout) },
+            topBar = { TopAppBar(onNavigateToAbout, onNavigateToSettings) },
         ) { innerPadding ->
             Main(Modifier.padding(innerPadding))
         }
@@ -188,17 +216,23 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun TopAppBar(onNavigateToAbout: () -> Unit) {
+    fun TopAppBar(
+        onNavigateToAbout: () -> Unit,
+        onNavigateToSettings: () -> Unit,
+    ) {
         TopAppBar(colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background,
             titleContentColor = MaterialTheme.colorScheme.primary,
         ), title = { Text("AutoAPKs") }, actions = {
-            TopAppBarMenu(onNavigateToAbout)
+            TopAppBarMenu(onNavigateToAbout, onNavigateToSettings)
         })
     }
 
     @Composable
-    fun TopAppBarMenu(onNavigateToAbout: () -> Unit) {
+    fun TopAppBarMenu(
+        onNavigateToAbout: () -> Unit,
+        onNavigateToSettings: () -> Unit,
+    ) {
         var expanded by remember { mutableStateOf(false) }
 
         IconButton(onClick = { expanded = !expanded }) {
@@ -219,6 +253,10 @@ class MainActivity : ComponentActivity() {
             DropdownMenuItem(text = { Text(text = "Import") }, onClick = {
                 expanded = false
                 openDocument.launch(arrayOf("application/json"))
+            })
+            DropdownMenuItem(text = { Text(text = "Settings") }, onClick = {
+                expanded = false
+                onNavigateToSettings()
             })
             DropdownMenuItem(text = { Text(text = "About") }, onClick = {
                 expanded = false

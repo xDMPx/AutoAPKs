@@ -1,10 +1,8 @@
 package com.xdmpx.autoapks.database
 
-import android.graphics.Bitmap
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.Update
 
 @Entity(tableName = "GitHubAPK")
 data class GitHubAPKEntity(

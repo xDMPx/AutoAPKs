@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+option java_package = "com.xdmpx.autoapks.datastore";
+option java_multiple_files = true;
+
+message SettingsProto {
+  bool use_pure_dark = 1;
+}

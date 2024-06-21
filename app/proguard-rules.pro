@@ -28,3 +28,7 @@
     public static int i(...);
     public static int e(...);
 }
+
+-keepclassmembernames class * extends com.google.protobuf.GeneratedMessageLite {
+   private *;
+}
