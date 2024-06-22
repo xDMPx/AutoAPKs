@@ -62,6 +62,17 @@ object SettingsUI {
                             }) {
                             settingsViewModel.toggleUsePureDark()
                         }
+                        Setting(stringResource(R.string.settings_dynamic_color),
+                            settingsState.useDynamicColor,
+                            icon = { modifier ->
+                                Icon(
+                                    painter = painterResource(id = R.drawable.rounded_palette_24),
+                                    contentDescription = null,
+                                    modifier = modifier
+                                )
+                            }) {
+                            settingsViewModel.toggleUseDynamicColor()
+                        }
                     }
                 }
             }

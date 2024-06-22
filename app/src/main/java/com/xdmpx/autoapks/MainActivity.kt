@@ -72,6 +72,7 @@ class MainActivity : ComponentActivity() {
     private val TAG_DEBUG = "MainActivity"
     private val settingsInstance = Settings.getInstance()
     private var usePureDark = mutableStateOf(false)
+    private var useDynamicColor = mutableStateOf(false)
     private lateinit var database: GitHubAPKDao
     private var apks = mutableStateListOf<GitHubAPK?>()
     private val createDocument =
@@ -84,15 +85,16 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> import(uri) }
 
     init {
-        settingsInstance.registerOnThemeUpdate { usePureDark ->
+        settingsInstance.registerOnThemeUpdate { usePureDark, useDynamicColor ->
             this@MainActivity.usePureDark.value = usePureDark
+            this@MainActivity.useDynamicColor.value = useDynamicColor
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            AutoAPKsTheme(pureDarkTheme = usePureDark.value) {
+            AutoAPKsTheme(pureDarkTheme = usePureDark.value, dynamicColor = useDynamicColor.value) {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
@@ -126,6 +128,7 @@ class MainActivity : ComponentActivity() {
             settingsInstance.loadSettings(this@MainActivity)
             val settings = settingsInstance.settingsState.value
             usePureDark.value = settings.usePureDark
+            useDynamicColor.value = settings.useDynamicColor
 
             var apks = database.getAll()
 

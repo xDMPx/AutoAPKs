@@ -4,6 +4,7 @@
     <string name="settings_screen">Settings</string>
     <string name="about_screen">About</string>
     <string name="settings_pure_dark">Use pure(AMOLED) dark in dark them</string>
+    <string name="settings_dynamic_color">Use dynamic colors in theme</string>
 
     <string name="about_app_description">A simple tool to automate apk files downland.</string>
     <string name="about_version">Version</string>

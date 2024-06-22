@@ -17,6 +17,7 @@ val Context.settingsDataStore: DataStore<SettingsProto> by dataStore(
 
 data class SettingsState(
     val usePureDark: Boolean = false,
+    val useDynamicColor: Boolean = true,
 )
 
 class SettingsViewModel : ViewModel() {
@@ -24,9 +25,9 @@ class SettingsViewModel : ViewModel() {
     private val _settingsState = MutableStateFlow(SettingsState())
     val settingsState: StateFlow<SettingsState> = _settingsState.asStateFlow()
 
-    lateinit var onThemeUpdate: (Boolean) -> Unit
+    lateinit var onThemeUpdate: (Boolean, Boolean) -> Unit
 
-    fun registerOnThemeUpdate(onThemeUpdate: (Boolean) -> Unit) {
+    fun registerOnThemeUpdate(onThemeUpdate: (Boolean, Boolean) -> Unit) {
         this.onThemeUpdate = onThemeUpdate
     }
 
@@ -36,15 +37,26 @@ class SettingsViewModel : ViewModel() {
         }
         onThemeUpdate(
             _settingsState.value.usePureDark,
+            _settingsState.value.useDynamicColor,
         )
     }
 
+    fun toggleUseDynamicColor() {
+        _settingsState.value.let {
+            _settingsState.value = it.copy(useDynamicColor = !it.useDynamicColor)
+        }
+        onThemeUpdate(
+            _settingsState.value.usePureDark,
+            _settingsState.value.useDynamicColor,
+        )
+    }
 
     suspend fun loadSettings(context: Context) {
         val settingsData = context.settingsDataStore.data.catch { }.first()
         _settingsState.value.let {
             _settingsState.value = it.copy(
                 usePureDark = settingsData.usePureDark,
+                useDynamicColor = settingsData.useDynamicColor,
             )
         }
     }
@@ -53,6 +65,7 @@ class SettingsViewModel : ViewModel() {
         context.settingsDataStore.updateData {
             it.toBuilder().apply {
                 usePureDark = this@SettingsViewModel._settingsState.value.usePureDark
+                useDynamicColor = this@SettingsViewModel._settingsState.value.useDynamicColor
             }.build()
         }
     }
