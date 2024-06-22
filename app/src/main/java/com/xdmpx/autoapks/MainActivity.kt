@@ -58,6 +58,7 @@ import com.xdmpx.autoapks.about.About
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity
+import com.xdmpx.autoapks.datastore.ThemeType
 import com.xdmpx.autoapks.settings.Settings
 import com.xdmpx.autoapks.settings.SettingsUI
 import com.xdmpx.autoapks.ui.theme.AutoAPKsTheme
@@ -73,6 +74,7 @@ class MainActivity : ComponentActivity() {
     private val settingsInstance = Settings.getInstance()
     private var usePureDark = mutableStateOf(false)
     private var useDynamicColor = mutableStateOf(false)
+    private var theme = mutableStateOf(ThemeType.SYSTEM)
     private lateinit var database: GitHubAPKDao
     private var apks = mutableStateListOf<GitHubAPK?>()
     private val createDocument =
@@ -85,16 +87,21 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> import(uri) }
 
     init {
-        settingsInstance.registerOnThemeUpdate { usePureDark, useDynamicColor ->
+        settingsInstance.registerOnThemeUpdate { usePureDark, useDynamicColor, theme ->
             this@MainActivity.usePureDark.value = usePureDark
             this@MainActivity.useDynamicColor.value = useDynamicColor
+            this@MainActivity.theme.value = theme
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            AutoAPKsTheme(pureDarkTheme = usePureDark.value, dynamicColor = useDynamicColor.value) {
+            AutoAPKsTheme(
+                pureDarkTheme = usePureDark.value,
+                dynamicColor = useDynamicColor.value,
+                theme = theme.value
+            ) {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
@@ -129,6 +136,7 @@ class MainActivity : ComponentActivity() {
             val settings = settingsInstance.settingsState.value
             usePureDark.value = settings.usePureDark
             useDynamicColor.value = settings.useDynamicColor
+            theme.value = settings.theme
 
             var apks = database.getAll()
 

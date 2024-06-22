@@ -4,6 +4,7 @@ import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
 import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import com.xdmpx.autoapks.datastore.SettingsProto
+import com.xdmpx.autoapks.datastore.ThemeType
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -29,6 +30,7 @@ object SettingsSerializer : Serializer<SettingsProto> {
         SettingsProto.getDefaultInstance().toBuilder().apply {
             usePureDark = false
             useDynamicColor = true
+            theme = ThemeType.SYSTEM
         }.build()
 
     override suspend fun readFrom(input: InputStream): SettingsProto {

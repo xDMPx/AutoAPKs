@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import androidx.lifecycle.ViewModel
 import com.xdmpx.autoapks.datastore.SettingsProto
+import com.xdmpx.autoapks.datastore.ThemeType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +19,7 @@ val Context.settingsDataStore: DataStore<SettingsProto> by dataStore(
 data class SettingsState(
     val usePureDark: Boolean = false,
     val useDynamicColor: Boolean = true,
+    val theme: ThemeType = ThemeType.SYSTEM
 )
 
 class SettingsViewModel : ViewModel() {
@@ -25,9 +27,9 @@ class SettingsViewModel : ViewModel() {
     private val _settingsState = MutableStateFlow(SettingsState())
     val settingsState: StateFlow<SettingsState> = _settingsState.asStateFlow()
 
-    lateinit var onThemeUpdate: (Boolean, Boolean) -> Unit
+    lateinit var onThemeUpdate: (Boolean, Boolean, ThemeType) -> Unit
 
-    fun registerOnThemeUpdate(onThemeUpdate: (Boolean, Boolean) -> Unit) {
+    fun registerOnThemeUpdate(onThemeUpdate: (Boolean, Boolean, ThemeType) -> Unit) {
         this.onThemeUpdate = onThemeUpdate
     }
 
@@ -38,6 +40,7 @@ class SettingsViewModel : ViewModel() {
         onThemeUpdate(
             _settingsState.value.usePureDark,
             _settingsState.value.useDynamicColor,
+            _settingsState.value.theme
         )
     }
 
@@ -48,6 +51,18 @@ class SettingsViewModel : ViewModel() {
         onThemeUpdate(
             _settingsState.value.usePureDark,
             _settingsState.value.useDynamicColor,
+            _settingsState.value.theme
+        )
+    }
+
+    fun setTheme(theme: ThemeType) {
+        _settingsState.value.let {
+            _settingsState.value = it.copy(theme = theme)
+        }
+        onThemeUpdate(
+            _settingsState.value.usePureDark,
+            _settingsState.value.useDynamicColor,
+            _settingsState.value.theme
         )
     }
 
@@ -57,6 +72,7 @@ class SettingsViewModel : ViewModel() {
             _settingsState.value = it.copy(
                 usePureDark = settingsData.usePureDark,
                 useDynamicColor = settingsData.useDynamicColor,
+                theme = settingsData.theme
             )
         }
     }
@@ -66,6 +82,7 @@ class SettingsViewModel : ViewModel() {
             it.toBuilder().apply {
                 usePureDark = this@SettingsViewModel._settingsState.value.usePureDark
                 useDynamicColor = this@SettingsViewModel._settingsState.value.useDynamicColor
+                theme = this@SettingsViewModel._settingsState.value.theme
             }.build()
         }
     }

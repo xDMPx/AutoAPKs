@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.xdmpx.autoapks.datastore.ThemeType
 
 data class ColorSchemeEx(
     val colorScheme: ColorScheme,
@@ -29,6 +30,13 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = Pink80,
 )
 
+private val PureDarkColorScheme = darkColorScheme(
+    primary = Purple80,
+    secondary = PurpleGrey80,
+    tertiary = Pink80,
+    background = Color.Black,
+    surface = Color.Black
+)
 
 private val darkColorSchemeEx = ColorSchemeEx(
     DarkColorScheme,
@@ -56,11 +64,16 @@ private val lightColorSchemeEx = ColorSchemeEx(
 
 @Composable
 fun AutoAPKsTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    pureDarkTheme: Boolean = false,
+    theme: ThemeType = ThemeType.SYSTEM, pureDarkTheme: Boolean = false,
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true, content: @Composable () -> Unit,
+    dynamicColor: Boolean = true, content: @Composable () -> Unit
 ) {
+    val darkTheme = when (theme) {
+        ThemeType.SYSTEM, ThemeType.UNRECOGNIZED -> isSystemInDarkTheme()
+        ThemeType.DARK -> true
+        ThemeType.LIGHT -> false
+    }
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
@@ -71,7 +84,8 @@ fun AutoAPKsTheme(
             dynamicTheme
         }
 
-        darkTheme -> DarkColorScheme
+        darkTheme && !pureDarkTheme -> DarkColorScheme
+        darkTheme && pureDarkTheme -> PureDarkColorScheme
         else -> LightColorScheme
     }
     val view = LocalView.current
@@ -88,6 +102,7 @@ fun AutoAPKsTheme(
     )
 }
 
+// TODO: Consider utilization of options
 @Composable
 fun getColorSchemeEx(dynamicColor: Boolean = true): ColorSchemeEx {
     val darkTheme: Boolean = isSystemInDarkTheme()

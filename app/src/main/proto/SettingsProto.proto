@@ -3,7 +3,14 @@ syntax = "proto3";
 option java_package = "com.xdmpx.autoapks.datastore";
 option java_multiple_files = true;
 
+enum ThemeType{
+  SYSTEM = 0;
+  DARK = 1;
+  LIGHT = 2;
+}
+
 message SettingsProto {
   bool use_pure_dark = 1;
   bool use_dynamic_color = 2;
+  ThemeType theme = 10;
 }
