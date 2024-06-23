@@ -87,6 +87,7 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> import(uri) }
 
     init {
+        settingsInstance.registerOnDeleteAllClick { this@MainActivity.deleteAll() }
         settingsInstance.registerOnThemeUpdate { usePureDark, useDynamicColor, theme ->
             this@MainActivity.usePureDark.value = usePureDark
             this@MainActivity.useDynamicColor.value = useDynamicColor
@@ -488,6 +489,16 @@ class MainActivity : ComponentActivity() {
             }
         } catch (e: Exception) {
             ShortToast(this@MainActivity, "Error importing data")
+        }
+    }
+
+    private fun deleteAll() {
+        this.lifecycle.coroutineScope.launch {
+            for (i in apks.indices) {
+                val apk = apks[i]
+                apk?.onRemoveRequest()
+                apks[i] = null
+            }
         }
     }
 

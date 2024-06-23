@@ -237,11 +237,9 @@ class GitHubAPK(
         apk.iconURL = null
         fetchIcon(context)
     }
-    val onRemoveRequest = {
-        scope.launch {
-            database.delete(apk)
-            onRemove(this@GitHubAPK)
-        }
-    }
 
+    suspend fun onRemoveRequest() {
+        database.delete(apk)
+        onRemove(this@GitHubAPK)
+    }
 }

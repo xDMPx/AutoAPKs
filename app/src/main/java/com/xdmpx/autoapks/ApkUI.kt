@@ -43,11 +43,14 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import com.xdmpx.autoapks.ui.theme.getColorSchemeEx
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 object ApkUI {
 
     private val TAG_DEBUG = "ApkUI"
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
@@ -90,7 +93,7 @@ object ApkUI {
                 apk.applicationVersionCode,
                 apkState.apkLink,
                 onDismissRequest = { showDialog.value = false },
-                onRemoveRequest = gitHubAPKViewModel.onRemoveRequest,
+                onRemoveRequest = { gitHubAPKViewModel.onRemoveRequest() },
                 gitHubAPKViewModel.fetchNewIcon
             )
         }
@@ -164,7 +167,7 @@ object ApkUI {
         applicationVersionCode: Long?,
         apkLink: String?,
         onDismissRequest: () -> Unit,
-        onRemoveRequest: () -> Job,
+        onRemoveRequest: suspend () -> Unit,
         fetchNewIcon: () -> Unit
     ) {
 
@@ -209,7 +212,7 @@ object ApkUI {
         apkLink: String?,
         onDismissRequest: () -> Unit,
         modifier: Modifier = Modifier,
-        onRemoveRequest: () -> Job,
+        onRemoveRequest: suspend () -> Unit,
     ) {
         val context = LocalContext.current
 
@@ -232,7 +235,9 @@ object ApkUI {
             }
             TextButton(onClick = {
                 onDismissRequest()
-                onRemoveRequest()
+                scope.launch {
+                    onRemoveRequest()
+                }
             }) {
                 Text("Remove")
             }

@@ -12,15 +12,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -40,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.xdmpx.autoapks.R
 import com.xdmpx.autoapks.datastore.ThemeType
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 object SettingsUI {
 
@@ -48,6 +53,7 @@ object SettingsUI {
     @Composable
     fun SettingsUI(settingsViewModel: SettingsViewModel, onNavigateToMain: () -> Unit) {
         val settingsState by settingsViewModel.settingsState.collectAsState()
+        var showDeleteAllConfirmationDialog by remember { mutableStateOf(false) }
 
         Scaffold(
             topBar = { SettingsTopAppBar(onNavigateToMain) },
@@ -86,10 +92,27 @@ object SettingsUI {
                             }) {
                             settingsViewModel.toggleUseDynamicColor()
                         }
+
+                        HorizontalDivider(Modifier.padding(settingPadding))
+
+                        SettingButton(stringResource(R.string.settings_delete_all),
+                            icon = { modifier ->
+                                Icon(
+                                    painter = painterResource(id = R.drawable.rounded_delete_forever_24),
+                                    contentDescription = null,
+                                    modifier = modifier
+                                )
+                            }) { showDeleteAllConfirmationDialog = true }
                     }
                 }
             }
 
+        }
+
+        DeleteAllAlertDialog(showDeleteAllConfirmationDialog,
+            onDismissRequest = { showDeleteAllConfirmationDialog = false }) {
+            showDeleteAllConfirmationDialog = false
+            settingsViewModel.onDeleteAllClick()
         }
     }
 
@@ -266,6 +289,66 @@ object SettingsUI {
                 onClick()
             })
             Text(text = text)
+        }
+    }
+
+    @Composable
+    private fun DeleteAllAlertDialog(
+        opened: Boolean, onDismissRequest: () -> Unit, onConfirmation: () -> Unit
+    ) {
+        if (!opened) return
+
+        ConfirmationAlertDialog(
+            stringResource(R.string.confirmation_delete_all), onDismissRequest, onConfirmation
+        )
+    }
+
+    @Composable
+    fun ConfirmationAlertDialog(
+        text: String, onDismissRequest: () -> Unit, onConfirmation: () -> Unit
+    ) {
+        AlertDialog(text = {
+            Text(text = text)
+        }, onDismissRequest = {
+            onDismissRequest()
+        }, confirmButton = {
+            TextButton(onClick = {
+                onConfirmation()
+            }) {
+                Text(stringResource(R.string.dialog_confirm))
+            }
+        }, dismissButton = {
+            TextButton(onClick = {
+                onDismissRequest()
+            }) {
+                Text(stringResource(R.string.dialog_cancel))
+            }
+        })
+    }
+
+    @Composable
+    fun SettingButton(
+        text: String,
+        icon: @Composable (modifier: Modifier) -> Unit = {},
+        onClick: () -> Unit,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onClick()
+                },
+        ) {
+            val modifier = Modifier.padding(settingPadding)
+            icon(modifier)
+            Text(
+                text = text,
+                Modifier
+                    .fillMaxWidth()
+                    .weight(0.75f)
+                    .padding(settingPadding)
+            )
         }
     }
 }

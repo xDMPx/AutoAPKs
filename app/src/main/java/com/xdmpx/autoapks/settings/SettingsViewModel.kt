@@ -28,9 +28,14 @@ class SettingsViewModel : ViewModel() {
     val settingsState: StateFlow<SettingsState> = _settingsState.asStateFlow()
 
     lateinit var onThemeUpdate: (Boolean, Boolean, ThemeType) -> Unit
+    lateinit var onDeleteAllClick: () -> Unit
 
     fun registerOnThemeUpdate(onThemeUpdate: (Boolean, Boolean, ThemeType) -> Unit) {
         this.onThemeUpdate = onThemeUpdate
+    }
+
+    fun registerOnDeleteAllClick(onDeleteAllClick: () -> Unit) {
+        this.onDeleteAllClick = onDeleteAllClick
     }
 
     fun toggleUsePureDark() {
