@@ -11,12 +11,14 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.xdmpx.autoapks.datastore.ThemeType
+import com.xdmpx.autoapks.settings.Settings
 
 data class ColorSchemeEx(
     val colorScheme: ColorScheme,
@@ -38,11 +40,6 @@ private val PureDarkColorScheme = darkColorScheme(
     surface = Color.Black
 )
 
-private val darkColorSchemeEx = ColorSchemeEx(
-    DarkColorScheme,
-    Color.Cyan,
-)
-
 private val LightColorScheme = lightColorScheme(
     primary = Purple40, secondary = PurpleGrey40, tertiary = Pink40
 
@@ -55,11 +52,6 @@ private val LightColorScheme = lightColorScheme(
     onBackground = Color(0xFF1C1B1F),
     onSurface = Color(0xFF1C1B1F),
     */
-)
-
-private val lightColorSchemeEx = ColorSchemeEx(
-    LightColorScheme,
-    Color.Blue,
 )
 
 @Composable
@@ -102,22 +94,39 @@ fun AutoAPKsTheme(
     )
 }
 
-// TODO: Consider utilization of options
 @Composable
-fun getColorSchemeEx(dynamicColor: Boolean = true): ColorSchemeEx {
-    val darkTheme: Boolean = isSystemInDarkTheme()
+fun getColorSchemeEx(): ColorSchemeEx {
+    val settingsInstance = Settings.getInstance()
+    val settings = settingsInstance.settingsState.collectAsState()
+    val pureDarkTheme = settings.value.usePureDark
+    val dynamicColor = settings.value.useDynamicColor
+    val theme = settings.value.theme
+
+    val darkTheme = when (theme) {
+        ThemeType.SYSTEM, ThemeType.UNRECOGNIZED -> isSystemInDarkTheme()
+        ThemeType.DARK -> true
+        ThemeType.LIGHT -> false
+    }
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            val colorScheme =
+            var dynamicTheme =
                 if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-            // TODO: use dynamic color scheme
-            if (darkTheme) darkColorSchemeEx else lightColorSchemeEx
+            if (darkTheme && pureDarkTheme) dynamicTheme =
+                dynamicTheme.copy(background = Color.Black, surface = Color.Black)
+            dynamicTheme
         }
 
-        darkTheme -> darkColorSchemeEx
-        else -> lightColorSchemeEx
+        darkTheme && !pureDarkTheme -> DarkColorScheme
+        darkTheme && pureDarkTheme -> PureDarkColorScheme
+        else -> LightColorScheme
     }
 
-    return colorScheme
+    return if (darkTheme) {
+        ColorSchemeEx(colorScheme, Color.Cyan)
+
+    } else {
+        ColorSchemeEx(colorScheme, Color.Blue)
+    }
 }
