@@ -29,6 +29,8 @@ class SettingsViewModel : ViewModel() {
 
     lateinit var onThemeUpdate: (Boolean, Boolean, ThemeType) -> Unit
     lateinit var onDeleteAllClick: () -> Unit
+    lateinit var onExportClick: () -> Unit
+    lateinit var onImportClick: () -> Unit
 
     fun registerOnThemeUpdate(onThemeUpdate: (Boolean, Boolean, ThemeType) -> Unit) {
         this.onThemeUpdate = onThemeUpdate
@@ -36,6 +38,14 @@ class SettingsViewModel : ViewModel() {
 
     fun registerOnDeleteAllClick(onDeleteAllClick: () -> Unit) {
         this.onDeleteAllClick = onDeleteAllClick
+    }
+
+    fun registerOnExportClick(onExportClick: () -> Unit) {
+        this.onExportClick = onExportClick
+    }
+
+    fun registerOnImportClick(onImportClick: () -> Unit) {
+        this.onImportClick = onImportClick
     }
 
     fun toggleUsePureDark() {

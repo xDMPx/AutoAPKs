@@ -88,6 +88,14 @@ class MainActivity : ComponentActivity() {
 
     init {
         settingsInstance.registerOnDeleteAllClick { this@MainActivity.deleteAll() }
+        settingsInstance.registerOnImportClick { openDocument.launch(arrayOf("application/json")) }
+        settingsInstance.registerOnExportClick {
+            val date = LocalDate.now()
+            val year = date.year
+            val month = String.format("%02d", date.monthValue)
+            val day = date.dayOfMonth
+            createDocument.launch("apks_export_${year}_${month}_$day.json")
+        }
         settingsInstance.registerOnThemeUpdate { usePureDark, useDynamicColor, theme ->
             this@MainActivity.usePureDark.value = usePureDark
             this@MainActivity.useDynamicColor.value = useDynamicColor
@@ -254,18 +262,6 @@ class MainActivity : ComponentActivity() {
         }
 
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text(text = "Export") }, onClick = {
-                expanded = false
-                val date = LocalDate.now()
-                val year = date.year
-                val month = String.format("%02d", date.monthValue)
-                val day = date.dayOfMonth
-                createDocument.launch("apks_export_${year}_${month}_$day.json")
-            })
-            DropdownMenuItem(text = { Text(text = "Import") }, onClick = {
-                expanded = false
-                openDocument.launch(arrayOf("application/json"))
-            })
             DropdownMenuItem(text = { Text(text = "Settings") }, onClick = {
                 expanded = false
                 onNavigateToSettings()

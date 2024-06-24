@@ -8,6 +8,8 @@
     <string name="settings_pure_dark">Use pure(AMOLED) dark in dark them</string>
     <string name="settings_dynamic_color">Use dynamic colors in theme</string>
     <string name="settings_delete_all">Delete all APKs</string>
+    <string name="settings_export_json">Export all APKs to a JSON file</string>
+    <string name="settings_import_json">"Import APKs from a JSON file"</string>
 
     <string name="confirmation_delete_all">Are you sure you want to delete all APKs? This action cannot be undone.</string>
 

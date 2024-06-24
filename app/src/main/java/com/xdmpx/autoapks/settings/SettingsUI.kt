@@ -95,6 +95,22 @@ object SettingsUI {
 
                         HorizontalDivider(Modifier.padding(settingPadding))
 
+                        SettingButton(stringResource(R.string.settings_export_json),
+                            icon = { modifier ->
+                                Icon(
+                                    painter = painterResource(id = R.drawable.rounded_file_save_24),
+                                    contentDescription = null,
+                                    modifier = modifier
+                                )
+                            }) { settingsViewModel.onExportClick() }
+                        SettingButton(stringResource(R.string.settings_import_json),
+                            icon = { modifier ->
+                                Icon(
+                                    painter = painterResource(id = R.drawable.rounded_file_open_24),
+                                    contentDescription = null,
+                                    modifier = modifier
+                                )
+                            }) { settingsViewModel.onImportClick() }
                         SettingButton(stringResource(R.string.settings_delete_all),
                             icon = { modifier ->
                                 Icon(
