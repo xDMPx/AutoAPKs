@@ -20,6 +20,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat.startActivity
+import androidx.lifecycle.coroutineScope
+import com.xdmpx.autoapks.database.GitHubAPKDatabase
+import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 object Utils {
     private val TAG_DEBUG = "Utils"
@@ -133,6 +140,60 @@ object Utils {
         Toast.makeText(
             context, text, Toast.LENGTH_SHORT
         ).show()
+    }
+
+    suspend fun exportToJSON(context: Context, uri: Uri): Boolean {
+        val database = GitHubAPKDatabase.getInstance(context).gitHubAPKDatabase
+
+        Log.d(TAG_DEBUG, "export")
+        val repositories = database.getExportData().map {
+            val jsonObject = JSONObject()
+            jsonObject.put("repository", it.repository)
+            jsonObject.put("base_directory", it.baseDirectory)
+        }
+        val json = JSONArray(repositories)
+
+        Log.d(TAG_DEBUG, "export -> $json")
+        return try {
+            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(json.toString().toByteArray())
+            }
+            true
+        } catch (e: Exception) {
+            ShortToast(context, "Error exporting data")
+            false
+        }
+    }
+
+    suspend fun importFromJSON(
+        context: Context, uri: Uri, addAPK: (String, String) -> Unit
+    ): Boolean {
+        try {
+            val database = GitHubAPKDatabase.getInstance(context).gitHubAPKDatabase
+            Log.d(TAG_DEBUG, "import")
+
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val bufferedReader = BufferedReader(InputStreamReader(inputStream))
+                val importedJson = JSONArray(bufferedReader.readText())
+                inputStream.close()
+
+                val repositories = database.getRepositories()
+
+                val toImport =
+                    (0 until importedJson.length()).map { importedJson.getJSONObject(it) }
+                        .filter { it.getString("repository") !in repositories }.toList()
+
+                toImport.forEach {
+                    addAPK(it.getString("repository"), it.getString("base_directory"))
+                }
+
+                Log.d(TAG_DEBUG, "import -> $toImport")
+            }
+
+            return true
+        } catch (e: Exception) {
+            return false
+        }
     }
 
 }

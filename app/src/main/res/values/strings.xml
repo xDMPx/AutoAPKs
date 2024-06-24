@@ -11,12 +11,17 @@
     <string name="settings_export_json">Export all APKs to a JSON file</string>
     <string name="settings_import_json">"Import APKs from a JSON file"</string>
 
-    <string name="confirmation_delete_all">Are you sure you want to delete all APKs? This action cannot be undone.</string>
-
     <string name="settings_theme">Theme</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_theme_light">Light</string>
+
+    <string name="confirmation_delete_all">Are you sure you want to delete all APKs? This action cannot be undone.</string>
+
+    <string name="export_successful">Counters exported</string>
+    <string name="export_failed">Error exporting data</string>
+    <string name="import_successful">Counters imported</string>
+    <string name="import_failed">Error importing data</string>
 
     <string name="about_screen">About</string>
     <string name="about_app_description">A simple tool to automate apk files downland.</string>

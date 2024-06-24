@@ -79,23 +79,22 @@ class MainActivity : ComponentActivity() {
     private var apks = mutableStateListOf<GitHubAPK?>()
     private val createDocument =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
-            export(
+            exportToJSONCallback(
                 uri
             )
         }
     private val openDocument =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> import(uri) }
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            importFromJSONCallback(
+                uri
+            )
+        }
 
     init {
         settingsInstance.registerOnDeleteAllClick { this@MainActivity.deleteAll() }
-        settingsInstance.registerOnImportClick { openDocument.launch(arrayOf("application/json")) }
-        settingsInstance.registerOnExportClick {
-            val date = LocalDate.now()
-            val year = date.year
-            val month = String.format("%02d", date.monthValue)
-            val day = date.dayOfMonth
-            createDocument.launch("apks_export_${year}_${month}_$day.json")
-        }
+        settingsInstance.registerOnExportClick { this@MainActivity.exportToJSON() }
+        settingsInstance.registerOnImportClick { this@MainActivity.importFromJSON() }
+        settingsInstance.registerOnDeleteAllClick { this@MainActivity.deleteAll() }
         settingsInstance.registerOnThemeUpdate { usePureDark, useDynamicColor, theme ->
             this@MainActivity.usePureDark.value = usePureDark
             this@MainActivity.useDynamicColor.value = useDynamicColor
@@ -433,67 +432,69 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun export(uri: Uri?) {
-        if (uri == null) {
-            return
-        }
-
-        Log.d(TAG_DEBUG, "export")
-        this.lifecycle.coroutineScope.launch {
-            val repositories = database.getExportData().map {
-                val jsonObject = JSONObject()
-                jsonObject.put("repository", it.repository)
-                jsonObject.put("base_directory", it.baseDirectory)
-            }
-            val json = JSONArray(repositories)
-            Log.d(TAG_DEBUG, "export -> $json")
-            try {
-                contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    outputStream.write(json.toString().toByteArray())
-                }
-            } catch (e: Exception) {
-                ShortToast(this@MainActivity, "Error exporting data")
-            }
-        }
-    }
-
-    private fun import(uri: Uri?) {
-        if (uri == null) {
-            return
-        }
-
-        Log.d(TAG_DEBUG, "import")
-        try {
-            contentResolver.openInputStream(uri)?.use { inputStream ->
-                this.lifecycle.coroutineScope.launch {
-                    val bufferedReader = BufferedReader(InputStreamReader(inputStream))
-                    val importedJson = JSONArray(bufferedReader.readText())
-                    inputStream.close()
-
-                    val repositories = database.getRepositories()
-
-                    val toImport =
-                        (0 until importedJson.length()).map { importedJson.getJSONObject(it) }
-                            .filter { it.getString("repository") !in repositories }.toList()
-
-                    toImport.forEach {
-                        addAPKRepository(it.getString("repository"), it.getString("base_directory"))
-                    }
-
-                    Log.d(TAG_DEBUG, "import -> $toImport")
-                }
-            }
-        } catch (e: Exception) {
-            ShortToast(this@MainActivity, "Error importing data")
-        }
-    }
-
     private fun deleteAll() {
         this.lifecycle.coroutineScope.launch {
             for (i in apks.indices) {
                 val apk = apks[i]
                 apk?.onRemoveRequest()
                 apks[i] = null
+            }
+        }
+    }
+
+    private fun exportToJSON() {
+        val date = LocalDate.now()
+        val year = date.year
+        val month = String.format("%02d", date.monthValue)
+        val day = date.dayOfMonth
+        createDocument.launch("apks_export_${year}_${month}_$day.json")
+    }
+
+
+    private fun exportToJSONCallback(uri: Uri?) {
+        if (uri == null) return
+
+        this.lifecycle.coroutineScope.launch {
+            if (Utils.exportToJSON(this@MainActivity, uri)) {
+                runOnUiThread {
+                    ShortToast(
+                        this@MainActivity, resources.getString(R.string.export_successful)
+                    )
+                }
+            } else {
+                runOnUiThread {
+                    ShortToast(
+                        this@MainActivity, resources.getString(R.string.export_failed)
+                    )
+                }
+            }
+        }
+    }
+
+    private fun importFromJSON() {
+        openDocument.launch(arrayOf("application/json"))
+    }
+
+    private fun importFromJSONCallback(uri: Uri?) {
+        if (uri == null) return
+
+        this.lifecycle.coroutineScope.launch {
+            if (Utils.importFromJSON(this@MainActivity, uri, addAPK = { repository, baseDirectory ->
+                    addAPKRepository(
+                        repository, baseDirectory
+                    )
+                })) {
+                runOnUiThread {
+                    ShortToast(
+                        this@MainActivity, resources.getString(R.string.import_successful)
+                    )
+                }
+            } else {
+                runOnUiThread {
+                    ShortToast(
+                        this@MainActivity, resources.getString(R.string.import_failed)
+                    )
+                }
             }
         }
     }
