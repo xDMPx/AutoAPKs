@@ -45,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.coroutineScope
@@ -256,19 +257,22 @@ class MainActivity : ComponentActivity() {
 
         IconButton(onClick = { expanded = !expanded }) {
             Icon(
-                imageVector = Icons.Filled.Menu, contentDescription = "Top Bar Menu"
+                imageVector = Icons.Filled.Menu,
+                contentDescription = stringResource(id = R.string.topappbar_menu_des)
             )
         }
 
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text(text = "Settings") }, onClick = {
-                expanded = false
-                onNavigateToSettings()
-            })
-            DropdownMenuItem(text = { Text(text = "About") }, onClick = {
-                expanded = false
-                onNavigateToAbout()
-            })
+            DropdownMenuItem(text = { Text(text = stringResource(id = R.string.screen_settings)) },
+                onClick = {
+                    expanded = false
+                    onNavigateToSettings()
+                })
+            DropdownMenuItem(text = { Text(text = stringResource(id = R.string.screen_about)) },
+                onClick = {
+                    expanded = false
+                    onNavigateToAbout()
+                })
         }
 
     }
@@ -281,7 +285,7 @@ class MainActivity : ComponentActivity() {
             FloatingActionButton(
                 onClick = { showDialog.value = !showDialog.value },
             ) {
-                Icon(Icons.Filled.Add, "Add GitHub apk repository")
+                Icon(Icons.Filled.Add, stringResource(id = R.string.add_github_apk))
             }
         }
 
@@ -335,7 +339,7 @@ class MainActivity : ComponentActivity() {
                 onValueChange = onValueChange,
                 minLines = 2,
                 maxLines = 2,
-                label = { Text("Repository URL") },
+                label = { Text(stringResource(id = R.string.repo_url)) },
             )
         }
     }
@@ -356,14 +360,14 @@ class MainActivity : ComponentActivity() {
                     Icon(
                         imageVector = Icons.Filled.KeyboardArrowDown, contentDescription = null
                     )
-                    Text(text = "Advance")
+                    Text(text = stringResource(id = R.string.advance))
                 }
                 if (expanded) {
                     OutlinedTextField(
                         value = value,
                         onValueChange = onValueChange,
                         maxLines = 1,
-                        label = { Text("Base directory") },
+                        label = { Text(stringResource(id = R.string.base_directory)) },
                     )
                 }
             }
@@ -386,7 +390,7 @@ class MainActivity : ComponentActivity() {
                 onClick = { onDismissRequest() },
                 modifier = Modifier.padding(8.dp),
             ) {
-                Text("Cancel")
+                Text(text = stringResource(id = R.string.cancel))
             }
             AddAPKRepositoryButton(userInput, baseDirectory, onDismissRequest, onAddRequest)
         }
@@ -411,17 +415,21 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 if (it) {
                                     onAddRequest(repo, baseDirectory)
-                                    ShortToast(this@MainActivity, "Added $repo")
+                                    ShortToast(
+                                        this@MainActivity, "${getString(R.string.added)} $repo"
+                                    )
                                 } else {
-                                    ShortToast(this@MainActivity, "Invalid Android APP Repository")
+                                    ShortToast(
+                                        this@MainActivity, text = getString(R.string.invalid_repo)
+                                    )
                                 }
                             }
                         } else {
-                            ShortToast(this@MainActivity, "Android APP Repository already added")
+                            ShortToast(this@MainActivity, getString(R.string.repo_already_added))
                         }
                     }
                     if (repo.isNullOrBlank()) {
-                        ShortToast(this@MainActivity, "Invalid Android APP Repository")
+                        ShortToast(this@MainActivity, text = getString(R.string.invalid_repo))
                     }
                 }
                 onDismissRequest()
