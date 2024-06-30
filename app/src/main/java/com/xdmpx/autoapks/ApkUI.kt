@@ -28,12 +28,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +44,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
+import com.xdmpx.autoapks.settings.Settings
+import com.xdmpx.autoapks.settings.SettingsUI.ConfirmationAlertDialog
 import com.xdmpx.autoapks.ui.theme.getColorSchemeEx
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +55,7 @@ object ApkUI {
 
     private val TAG_DEBUG = "ApkUI"
     private val scope = CoroutineScope(Dispatchers.IO)
+    private val settingsInstance = Settings.getInstance()
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
@@ -214,7 +219,9 @@ object ApkUI {
         modifier: Modifier = Modifier,
         onRemoveRequest: suspend () -> Unit,
     ) {
+        val settings by settingsInstance.settingsState.collectAsState()
         val context = LocalContext.current
+        var openRemoveAlertDialog by remember { mutableStateOf(false) }
 
         Column(modifier = modifier) {
             applicationPackageName?.let {
@@ -234,12 +241,25 @@ object ApkUI {
                 }
             }
             TextButton(onClick = {
-                onDismissRequest()
-                scope.launch {
-                    onRemoveRequest()
-                }
+                if (!settings.confirmationDialogRemove) {
+                    onDismissRequest()
+                    scope.launch {
+                        onRemoveRequest()
+                    }
+                } else openRemoveAlertDialog = true
+
             }) {
                 Text("Remove")
+            }
+        }
+
+        RemoveAlertDialog(
+            openRemoveAlertDialog,
+            onDismissRequest = { openRemoveAlertDialog = false }) {
+            openRemoveAlertDialog = false
+            onDismissRequest()
+            scope.launch {
+                onRemoveRequest()
             }
         }
     }
@@ -322,6 +342,16 @@ object ApkUI {
             }
         }, modifier = modifier)
 
+    }
+
+    @Composable
+    private fun RemoveAlertDialog(
+        opened: Boolean, onDismissRequest: () -> Unit, onConfirmation: () -> Unit
+    ) {
+        if (!opened) return
+        ConfirmationAlertDialog(
+            stringResource(R.string.confirmation_remove), onDismissRequest, onConfirmation
+        )
     }
 
 }

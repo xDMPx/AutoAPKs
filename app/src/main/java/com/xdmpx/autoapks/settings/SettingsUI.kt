@@ -95,7 +95,8 @@ object SettingsUI {
 
                         HorizontalDivider(Modifier.padding(settingPadding))
 
-                        SettingButton(stringResource(R.string.settings_export_json),
+                        SettingButton(
+                            stringResource(R.string.settings_export_json),
                             icon = { modifier ->
                                 Icon(
                                     painter = painterResource(id = R.drawable.rounded_file_save_24),
@@ -103,7 +104,8 @@ object SettingsUI {
                                     modifier = modifier
                                 )
                             }) { settingsViewModel.onExportClick() }
-                        SettingButton(stringResource(R.string.settings_import_json),
+                        SettingButton(
+                            stringResource(R.string.settings_import_json),
                             icon = { modifier ->
                                 Icon(
                                     painter = painterResource(id = R.drawable.rounded_file_open_24),
@@ -111,7 +113,8 @@ object SettingsUI {
                                     modifier = modifier
                                 )
                             }) { settingsViewModel.onImportClick() }
-                        SettingButton(stringResource(R.string.settings_delete_all),
+                        SettingButton(
+                            stringResource(R.string.settings_delete_all),
                             icon = { modifier ->
                                 Icon(
                                     painter = painterResource(id = R.drawable.rounded_delete_forever_24),
@@ -119,6 +122,14 @@ object SettingsUI {
                                     modifier = modifier
                                 )
                             }) { showDeleteAllConfirmationDialog = true }
+
+                        HorizontalDivider(Modifier.padding(settingPadding))
+
+                        Setting(
+                            stringResource(R.string.settings_remove_dialog),
+                            settingsState.confirmationDialogRemove
+                        ) { settingsViewModel.toggleConfirmationDialogRemove() }
+
                     }
                 }
             }
@@ -131,7 +142,6 @@ object SettingsUI {
             settingsViewModel.onDeleteAllClick()
         }
     }
-
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -189,7 +199,6 @@ object SettingsUI {
             }
         }
     }
-
 
     @Composable
     fun ThemeSelectorSetting(

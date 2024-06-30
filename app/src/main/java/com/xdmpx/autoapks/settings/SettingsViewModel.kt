@@ -19,7 +19,8 @@ val Context.settingsDataStore: DataStore<SettingsProto> by dataStore(
 data class SettingsState(
     val usePureDark: Boolean = false,
     val useDynamicColor: Boolean = true,
-    val theme: ThemeType = ThemeType.SYSTEM
+    val theme: ThemeType = ThemeType.SYSTEM,
+    val confirmationDialogRemove: Boolean = true,
 )
 
 class SettingsViewModel : ViewModel() {
@@ -70,6 +71,12 @@ class SettingsViewModel : ViewModel() {
         )
     }
 
+    fun toggleConfirmationDialogRemove() {
+        _settingsState.value.let {
+            _settingsState.value = it.copy(confirmationDialogRemove = !it.confirmationDialogRemove)
+        }
+    }
+
     fun setTheme(theme: ThemeType) {
         _settingsState.value.let {
             _settingsState.value = it.copy(theme = theme)
@@ -87,7 +94,8 @@ class SettingsViewModel : ViewModel() {
             _settingsState.value = it.copy(
                 usePureDark = settingsData.usePureDark,
                 useDynamicColor = settingsData.useDynamicColor,
-                theme = settingsData.theme
+                theme = settingsData.theme,
+                confirmationDialogRemove = settingsData.confirmationDialogRemove,
             )
         }
     }
@@ -98,6 +106,8 @@ class SettingsViewModel : ViewModel() {
                 usePureDark = this@SettingsViewModel._settingsState.value.usePureDark
                 useDynamicColor = this@SettingsViewModel._settingsState.value.useDynamicColor
                 theme = this@SettingsViewModel._settingsState.value.theme
+                confirmationDialogRemove =
+                    this@SettingsViewModel._settingsState.value.confirmationDialogRemove
             }.build()
         }
     }

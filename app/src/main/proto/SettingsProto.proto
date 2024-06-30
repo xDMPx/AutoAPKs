@@ -13,4 +13,5 @@ message SettingsProto {
   bool use_pure_dark = 1;
   bool use_dynamic_color = 2;
   ThemeType theme = 10;
+  bool confirmation_dialog_remove = 3;
 }

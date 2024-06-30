@@ -10,6 +10,7 @@
     <string name="settings_delete_all">Delete all APKs</string>
     <string name="settings_export_json">Export all APKs to a JSON file</string>
     <string name="settings_import_json">"Import APKs from a JSON file"</string>
+    <string name="settings_remove_dialog">Enable remove confirmation dialog</string>
 
     <string name="settings_theme">Theme</string>
     <string name="settings_theme_system">System</string>
@@ -17,6 +18,7 @@
     <string name="settings_theme_light">Light</string>
 
     <string name="confirmation_delete_all">Are you sure you want to delete all APKs? This action cannot be undone.</string>
+    <string name="confirmation_remove">Are you sure you want to remove this APK entry? This action cannot be undone.</string>
 
     <string name="export_successful">Counters exported</string>
     <string name="export_failed">Error exporting data</string>
