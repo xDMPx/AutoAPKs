@@ -436,7 +436,7 @@ class MainActivity : ComponentActivity() {
             },
             modifier = Modifier.padding(8.dp),
         ) {
-            Text("Add")
+            Text(stringResource(id = R.string.add))
         }
     }
 

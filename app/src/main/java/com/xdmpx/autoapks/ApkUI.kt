@@ -253,8 +253,7 @@ object ApkUI {
             }
         }
 
-        RemoveAlertDialog(
-            openRemoveAlertDialog,
+        RemoveAlertDialog(openRemoveAlertDialog,
             onDismissRequest = { openRemoveAlertDialog = false }) {
             openRemoveAlertDialog = false
             onDismissRequest()
@@ -299,7 +298,7 @@ object ApkUI {
         Button(onClick = {
             Utils.installApplication(context, apkLink)
         }, modifier) {
-            Text("Install")
+            Text(stringResource(id = R.string.install))
         }
     }
 

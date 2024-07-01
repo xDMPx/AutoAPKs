@@ -24,12 +24,14 @@
     <string name="confirmation_delete_all">Are you sure you want to delete all APKs? This action cannot be undone.</string>
     <string name="confirmation_remove">Are you sure you want to remove this APK entry? This action cannot be undone.</string>
 
+    <string name="install">Install</string>
     <string name="uninstall">Uninstall</string>
     <string name="reinstall">Reinstall</string>
     <string name="remove">Remove</string>
     <string name="cancel">Cancel</string>
     <string name="update">Update</string>
     <string name="added">Added</string>
+    <string name="add">Add</string>
     <string name="repo_url">Repository URL</string>
     <string name="add_github_apk">Add GitHub apk repository</string>
     <string name="advance">Advance</string>
@@ -42,6 +44,7 @@
     <string name="import_successful">Counters imported</string>
     <string name="import_failed">Error importing data</string>
 
+    <string name="copied_to_clipboard">Copied to clipboard</string>
     <string name="about_screen">About</string>
     <string name="about_app_description">A simple tool to automate apk files downland.</string>
     <string name="about_version">Version</string>

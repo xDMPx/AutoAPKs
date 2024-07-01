@@ -204,11 +204,17 @@ object About {
     private fun copyVersionToClipboard(context: Context) {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip: ClipData = ClipData.newPlainText(
-            "${context.getString(context.applicationInfo.labelRes)} Version",
+            "${context.getString(context.applicationInfo.labelRes)} ${
+                getString(
+                    context, R.string.about_version
+                )
+            }",
             "${context.getString(context.applicationInfo.labelRes)} v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
         )
         clipboard.setPrimaryClip(clip)
-        Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            context, getString(context, R.string.copied_to_clipboard), Toast.LENGTH_SHORT
+        ).show()
     }
 
 }

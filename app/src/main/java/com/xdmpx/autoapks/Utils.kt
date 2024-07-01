@@ -160,7 +160,6 @@ object Utils {
             }
             true
         } catch (e: Exception) {
-            ShortToast(context, "Error exporting data")
             false
         }
     }
