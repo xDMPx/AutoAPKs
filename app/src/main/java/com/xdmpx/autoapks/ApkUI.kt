@@ -229,7 +229,7 @@ object ApkUI {
                     Utils.uninstallApplication(context, it)
                     onDismissRequest()
                 }) {
-                    Text("Uninstall")
+                    Text(stringResource(id = R.string.uninstall))
                 }
             }
             if (applicationVersionCode != null && apkLink != null) {
@@ -237,7 +237,7 @@ object ApkUI {
                     onDismissRequest()
                     apkLink.let { Utils.installApplication(context, it) }
                 }) {
-                    Text("Reinstall")
+                    Text(stringResource(id = R.string.reinstall))
                 }
             }
             TextButton(onClick = {
@@ -249,7 +249,7 @@ object ApkUI {
                 } else openRemoveAlertDialog = true
 
             }) {
-                Text("Remove")
+                Text(stringResource(id = R.string.remove))
             }
         }
 
@@ -310,7 +310,7 @@ object ApkUI {
             val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(apkLink))
             ContextCompat.startActivity(context, browserIntent, null)
         }, modifier) {
-            Text("Update")
+            Text(stringResource(id = R.string.update))
         }
     }
 
