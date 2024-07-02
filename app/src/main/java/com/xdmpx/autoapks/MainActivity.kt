@@ -66,6 +66,8 @@ import com.xdmpx.autoapks.settings.Settings
 import com.xdmpx.autoapks.settings.SettingsUI
 import com.xdmpx.autoapks.ui.theme.AutoAPKsTheme
 import com.xdmpx.autoapks.utils.Utils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -77,6 +79,8 @@ class MainActivity : ComponentActivity() {
     private var theme = mutableStateOf(ThemeType.SYSTEM)
     private lateinit var database: GitHubAPKDao
     private var apks = mutableStateListOf<GitHubAPK?>()
+    private val scopeIO = CoroutineScope(Dispatchers.IO)
+
     private val createDocument =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
             exportToJSONCallback(
@@ -139,7 +143,7 @@ class MainActivity : ComponentActivity() {
 
         database = GitHubAPKDatabase.getInstance(this).gitHubAPKDatabase
 
-        this.lifecycle.coroutineScope.launch {
+        scopeIO.launch {
             settingsInstance.loadSettings(this@MainActivity)
             val settings = settingsInstance.settingsState.value
             usePureDark.value = settings.usePureDark
@@ -173,14 +177,15 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        this.lifecycle.coroutineScope.launch {
+        scopeIO.launch {
             settingsInstance.saveSettings(this@MainActivity)
+            Log.d(TAG_DEBUG, "onStop")
         }
         super.onStop()
     }
 
     private fun addAPKRepository(repository: String, baseDirectory: String) {
-        this.lifecycle.coroutineScope.launch {
+        scopeIO.launch {
             val apk = GitHubAPKEntity(repository, baseDirectory = baseDirectory)
             val apkId = database.insert(apk)
             apks.add(GitHubAPK(
@@ -406,7 +411,7 @@ class MainActivity : ComponentActivity() {
         TextButton(
             onClick = {
                 val repo = Utils.userInputToAPKRepository(userInput)
-                this.lifecycle.coroutineScope.launch {
+                scopeIO.launch {
                     repo?.let { repo ->
                         if (database.getRepositoryByName(repo).isNullOrBlank()) {
                             GitHubRepoFetcher.validateAndroidAPKRepository(
@@ -440,7 +445,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun deleteAll() {
-        this.lifecycle.coroutineScope.launch {
+        scopeIO.launch {
             for (i in apks.indices) {
                 val apk = apks[i]
                 apk?.onRemoveRequest()
@@ -461,7 +466,7 @@ class MainActivity : ComponentActivity() {
     private fun exportToJSONCallback(uri: Uri?) {
         if (uri == null) return
 
-        this.lifecycle.coroutineScope.launch {
+        scopeIO.launch {
             if (Utils.exportToJSON(this@MainActivity, uri)) {
                 runOnUiThread {
                     ShortToast(
@@ -485,7 +490,7 @@ class MainActivity : ComponentActivity() {
     private fun importFromJSONCallback(uri: Uri?) {
         if (uri == null) return
 
-        this.lifecycle.coroutineScope.launch {
+        scopeIO.launch {
             if (Utils.importFromJSON(this@MainActivity, uri, addAPK = { repository, baseDirectory ->
                     addAPKRepository(
                         repository, baseDirectory
