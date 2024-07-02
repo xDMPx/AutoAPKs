@@ -53,8 +53,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.xdmpx.autoapks.ApkUI.ApkCard
-import com.xdmpx.autoapks.Utils.CustomDialog
-import com.xdmpx.autoapks.Utils.ShortToast
+import com.xdmpx.autoapks.utils.Utils.CustomDialog
+import com.xdmpx.autoapks.utils.Utils.ShortToast
 import com.xdmpx.autoapks.about.About
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
@@ -63,11 +63,8 @@ import com.xdmpx.autoapks.datastore.ThemeType
 import com.xdmpx.autoapks.settings.Settings
 import com.xdmpx.autoapks.settings.SettingsUI
 import com.xdmpx.autoapks.ui.theme.AutoAPKsTheme
+import com.xdmpx.autoapks.utils.Utils
 import kotlinx.coroutines.launch
-import org.json.JSONArray
-import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {

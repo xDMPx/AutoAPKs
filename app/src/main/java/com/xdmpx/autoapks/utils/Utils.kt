@@ -1,4 +1,4 @@
-package com.xdmpx.autoapks
+package com.xdmpx.autoapks.utils
 
 import android.content.Context
 import android.content.Intent
@@ -20,9 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat.startActivity
-import androidx.lifecycle.coroutineScope
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
-import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader

@@ -6,6 +6,7 @@ import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
+import com.xdmpx.autoapks.utils.VRequestQueue
 
 object GitHubRepoFetcher {
     val TAG_DEBUG = "GitHubRepoFetcher"

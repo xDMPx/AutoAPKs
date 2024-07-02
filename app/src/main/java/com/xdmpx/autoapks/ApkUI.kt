@@ -47,6 +47,7 @@ import coil.compose.AsyncImage
 import com.xdmpx.autoapks.settings.Settings
 import com.xdmpx.autoapks.settings.SettingsUI.ConfirmationAlertDialog
 import com.xdmpx.autoapks.ui.theme.getColorSchemeEx
+import com.xdmpx.autoapks.utils.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

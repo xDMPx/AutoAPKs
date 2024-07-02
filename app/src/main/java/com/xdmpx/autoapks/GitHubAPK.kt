@@ -7,6 +7,7 @@ import com.xdmpx.autoapks.GitHubRepoFetcher.fetchDefaultRepoBranch
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity
+import com.xdmpx.autoapks.utils.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow

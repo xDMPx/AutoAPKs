@@ -1,4 +1,4 @@
-package com.xdmpx.autoapks
+package com.xdmpx.autoapks.utils
 
 import android.content.Context
 import com.android.volley.RequestQueue
