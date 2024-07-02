@@ -1,4 +1,4 @@
-package com.xdmpx.autoapks
+package com.xdmpx.autoapks.apk.github
 
 import android.content.Context
 import android.util.Log

@@ -1,9 +1,9 @@
-package com.xdmpx.autoapks
+package com.xdmpx.autoapks.apk.github
 
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.xdmpx.autoapks.GitHubRepoFetcher.fetchDefaultRepoBranch
+import com.xdmpx.autoapks.apk.github.GitHubRepoFetcher.fetchDefaultRepoBranch
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity

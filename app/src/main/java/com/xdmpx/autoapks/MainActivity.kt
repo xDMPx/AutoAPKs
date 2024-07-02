@@ -52,10 +52,12 @@ import androidx.lifecycle.coroutineScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.xdmpx.autoapks.ApkUI.ApkCard
+import com.xdmpx.autoapks.apk.ApkUI.ApkCard
 import com.xdmpx.autoapks.utils.Utils.CustomDialog
 import com.xdmpx.autoapks.utils.Utils.ShortToast
 import com.xdmpx.autoapks.about.About
+import com.xdmpx.autoapks.apk.github.GitHubAPK
+import com.xdmpx.autoapks.apk.github.GitHubRepoFetcher
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity

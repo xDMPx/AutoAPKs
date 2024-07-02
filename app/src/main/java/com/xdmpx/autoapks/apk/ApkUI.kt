@@ -1,4 +1,4 @@
-package com.xdmpx.autoapks
+package com.xdmpx.autoapks.apk
 
 import android.content.Intent
 import android.net.Uri
@@ -44,6 +44,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
+import com.xdmpx.autoapks.R
+import com.xdmpx.autoapks.apk.github.GitHubAPK
 import com.xdmpx.autoapks.settings.Settings
 import com.xdmpx.autoapks.settings.SettingsUI.ConfirmationAlertDialog
 import com.xdmpx.autoapks.ui.theme.getColorSchemeEx
