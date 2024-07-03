@@ -152,7 +152,7 @@ class MainActivity : ComponentActivity() {
 
             var apks = database.getAll()
 
-            if (apks.isEmpty()) {
+            if (apks.isEmpty() && settings.autoAddApksRepos) {
                 val autoapks = GitHubAPKEntity("xDMPx/AutoAPKs")
                 val normscount = GitHubAPKEntity("xDMPx/NormsCount")
 

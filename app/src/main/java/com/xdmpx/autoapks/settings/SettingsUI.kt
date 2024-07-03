@@ -126,6 +126,11 @@ object SettingsUI {
                         HorizontalDivider(Modifier.padding(settingPadding))
 
                         Setting(
+                            stringResource(R.string.settings_auto_add_repos),
+                            settingsState.autoAddApksRepos,
+                        ) { settingsViewModel.toggleAutoAddApksRepos() }
+
+                        Setting(
                             stringResource(R.string.settings_remove_dialog),
                             settingsState.confirmationDialogRemove
                         ) { settingsViewModel.toggleConfirmationDialogRemove() }

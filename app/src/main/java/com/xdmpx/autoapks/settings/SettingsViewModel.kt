@@ -21,6 +21,7 @@ data class SettingsState(
     val useDynamicColor: Boolean = true,
     val theme: ThemeType = ThemeType.SYSTEM,
     val confirmationDialogRemove: Boolean = true,
+    val autoAddApksRepos: Boolean = true,
 )
 
 class SettingsViewModel : ViewModel() {
@@ -77,6 +78,12 @@ class SettingsViewModel : ViewModel() {
         }
     }
 
+    fun toggleAutoAddApksRepos() {
+        _settingsState.value.let {
+            _settingsState.value = it.copy(autoAddApksRepos = !it.autoAddApksRepos)
+        }
+    }
+
     fun setTheme(theme: ThemeType) {
         _settingsState.value.let {
             _settingsState.value = it.copy(theme = theme)
@@ -96,6 +103,7 @@ class SettingsViewModel : ViewModel() {
                 useDynamicColor = settingsData.useDynamicColor,
                 theme = settingsData.theme,
                 confirmationDialogRemove = settingsData.confirmationDialogRemove,
+                autoAddApksRepos = settingsData.autoAddApksRepos,
             )
         }
     }
@@ -108,6 +116,7 @@ class SettingsViewModel : ViewModel() {
                 theme = this@SettingsViewModel._settingsState.value.theme
                 confirmationDialogRemove =
                     this@SettingsViewModel._settingsState.value.confirmationDialogRemove
+                autoAddApksRepos = this@SettingsViewModel._settingsState.value.autoAddApksRepos
             }.build()
         }
     }

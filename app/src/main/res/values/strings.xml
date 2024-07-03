@@ -15,6 +15,7 @@
     <string name="settings_export_json">Export all APKs to a JSON file</string>
     <string name="settings_import_json">"Import APKs from a JSON file"</string>
     <string name="settings_remove_dialog">Enable remove confirmation dialog</string>
+    <string name="settings_auto_add_repos">Auto-Add xDMPx APKs Repositories</string>
 
     <string name="settings_theme">Theme</string>
     <string name="settings_theme_system">System</string>

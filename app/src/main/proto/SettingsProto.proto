@@ -14,4 +14,5 @@ message SettingsProto {
   bool use_dynamic_color = 2;
   ThemeType theme = 10;
   bool confirmation_dialog_remove = 3;
+  bool auto_add_apks_repos = 4;
 }

@@ -32,6 +32,7 @@ object SettingsSerializer : Serializer<SettingsProto> {
             useDynamicColor = true
             theme = ThemeType.SYSTEM
             confirmationDialogRemove = true
+            autoAddApksRepos = true
         }.build()
 
     override suspend fun readFrom(input: InputStream): SettingsProto {
