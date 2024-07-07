@@ -6,58 +6,30 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.coroutineScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.xdmpx.autoapks.apk.ApkUI.ApkCard
-import com.xdmpx.autoapks.utils.Utils.CustomDialog
-import com.xdmpx.autoapks.utils.Utils.ShortToast
+import com.xdmpx.autoapks.MainUI.AddAPKRepository
 import com.xdmpx.autoapks.about.About
+import com.xdmpx.autoapks.apk.ApkUI.ApkCard
 import com.xdmpx.autoapks.apk.github.GitHubAPK
-import com.xdmpx.autoapks.apk.github.GitHubRepoFetcher
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity
@@ -66,6 +38,7 @@ import com.xdmpx.autoapks.settings.Settings
 import com.xdmpx.autoapks.settings.SettingsUI
 import com.xdmpx.autoapks.ui.theme.AutoAPKsTheme
 import com.xdmpx.autoapks.utils.Utils
+import com.xdmpx.autoapks.utils.Utils.ShortToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -204,14 +177,13 @@ class MainActivity : ComponentActivity() {
         onNavigateToSettings: () -> Unit,
     ) {
         Scaffold(
-            topBar = { TopAppBar(onNavigateToAbout, onNavigateToSettings) },
+            topBar = { MainUI.TopAppBar(onNavigateToAbout, onNavigateToSettings) },
         ) { innerPadding ->
             Main(Modifier.padding(innerPadding))
         }
     }
 
     @Composable
-    @Preview
     fun Main(modifier: Modifier = Modifier) {
         val apks = remember { apks }
         val apksColumnWeight = 0.83f
@@ -234,215 +206,10 @@ class MainActivity : ComponentActivity() {
                     .fillMaxSize()
                     .weight(1f - apksColumnWeight)
                     .padding(16.dp)
-            )
+            ) { r, b -> addAPKRepository(r, b) }
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun TopAppBar(
-        onNavigateToAbout: () -> Unit,
-        onNavigateToSettings: () -> Unit,
-    ) {
-        TopAppBar(colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background,
-            titleContentColor = MaterialTheme.colorScheme.primary,
-        ), title = { Text("AutoAPKs") }, actions = {
-            TopAppBarMenu(onNavigateToAbout, onNavigateToSettings)
-        })
-    }
-
-    @Composable
-    fun TopAppBarMenu(
-        onNavigateToAbout: () -> Unit,
-        onNavigateToSettings: () -> Unit,
-    ) {
-        var expanded by remember { mutableStateOf(false) }
-
-        IconButton(onClick = { expanded = !expanded }) {
-            Icon(
-                imageVector = Icons.Filled.Menu,
-                contentDescription = stringResource(id = R.string.topappbar_menu_des)
-            )
-        }
-
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text(text = stringResource(id = R.string.screen_settings)) },
-                onClick = {
-                    expanded = false
-                    onNavigateToSettings()
-                })
-            DropdownMenuItem(text = { Text(text = stringResource(id = R.string.screen_about)) },
-                onClick = {
-                    expanded = false
-                    onNavigateToAbout()
-                })
-        }
-
-    }
-
-    @Composable
-    fun AddAPKRepository(contentAlignment: Alignment, modifier: Modifier = Modifier) {
-        val showDialog = remember { mutableStateOf(false) }
-
-        Box(contentAlignment = contentAlignment, modifier = modifier) {
-            FloatingActionButton(
-                onClick = { showDialog.value = !showDialog.value },
-            ) {
-                Icon(Icons.Filled.Add, stringResource(id = R.string.add_github_apk))
-            }
-        }
-
-        if (showDialog.value) {
-            AddAPKRepositoryDialog(onAddRequest = { userInput, baseDirectory ->
-                addAPKRepository(
-                    userInput, baseDirectory
-                )
-            }, onDismissRequest = { showDialog.value = !showDialog.value })
-        }
-    }
-
-    @Composable
-    fun AddAPKRepositoryDialog(
-        onDismissRequest: () -> Unit,
-        onAddRequest: (userInput: String, baseDirectory: String) -> Unit
-    ) {
-        var userInput by remember { mutableStateOf("") }
-        var baseDirectory by remember { mutableStateOf("app") }
-
-        CustomDialog(onDismissRequest) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(IntrinsicSize.Min)
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Column {
-                        AddAPKRepositoryTextField(userInput, { userInput = it })
-                        AddAPKRepositoryAdvance(baseDirectory, { baseDirectory = it })
-                    }
-                    AddAPKRepositoryDialogButtons(
-                        userInput, baseDirectory, onDismissRequest, onAddRequest
-                    )
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun AddAPKRepositoryTextField(
-        value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier
-    ) {
-        Box(
-            modifier = modifier, contentAlignment = Alignment.Center
-        ) {
-            OutlinedTextField(
-                value = value,
-                onValueChange = onValueChange,
-                minLines = 2,
-                maxLines = 2,
-                label = { Text(stringResource(id = R.string.repo_url)) },
-            )
-        }
-    }
-
-    @Composable
-    fun AddAPKRepositoryAdvance(
-        value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier
-    ) {
-        var expanded by remember { mutableStateOf(false) }
-
-        Box(
-            modifier = modifier, contentAlignment = Alignment.TopStart
-        ) {
-            Column {
-                TextButton(
-                    onClick = { expanded = !expanded }, modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.KeyboardArrowDown, contentDescription = null
-                    )
-                    Text(text = stringResource(id = R.string.advance))
-                }
-                if (expanded) {
-                    OutlinedTextField(
-                        value = value,
-                        onValueChange = onValueChange,
-                        maxLines = 1,
-                        label = { Text(stringResource(id = R.string.base_directory)) },
-                    )
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun AddAPKRepositoryDialogButtons(
-        userInput: String,
-        baseDirectory: String,
-        onDismissRequest: () -> Unit,
-        onAddRequest: (userInput: String, baseDirectory: String) -> Unit,
-        modifier: Modifier = Modifier,
-    ) {
-        Row(
-            modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            TextButton(
-                onClick = { onDismissRequest() },
-                modifier = Modifier.padding(8.dp),
-            ) {
-                Text(text = stringResource(id = R.string.cancel))
-            }
-            AddAPKRepositoryButton(userInput, baseDirectory, onDismissRequest, onAddRequest)
-        }
-    }
-
-    @Composable
-    private fun AddAPKRepositoryButton(
-        userInput: String,
-        baseDirectory: String,
-        onDismissRequest: () -> Unit,
-        onAddRequest: (userInput: String, baseDirectory: String) -> Unit
-
-    ) {
-        TextButton(
-            onClick = {
-                val repo = Utils.userInputToAPKRepository(userInput)
-                scopeIO.launch {
-                    repo?.let { repo ->
-                        if (database.getRepositoryByName(repo).isNullOrBlank()) {
-                            GitHubRepoFetcher.validateAndroidAPKRepository(
-                                repo, baseDirectory, this@MainActivity
-                            ) {
-                                if (it) {
-                                    onAddRequest(repo, baseDirectory)
-                                    ShortToast(
-                                        this@MainActivity, "${getString(R.string.added)} $repo"
-                                    )
-                                } else {
-                                    ShortToast(
-                                        this@MainActivity, text = getString(R.string.invalid_repo)
-                                    )
-                                }
-                            }
-                        } else {
-                            ShortToast(this@MainActivity, getString(R.string.repo_already_added))
-                        }
-                    }
-                    if (repo.isNullOrBlank()) {
-                        ShortToast(this@MainActivity, text = getString(R.string.invalid_repo))
-                    }
-                }
-                onDismissRequest()
-            },
-            modifier = Modifier.padding(8.dp),
-        ) {
-            Text(stringResource(id = R.string.add))
-        }
-    }
 
     private fun deleteAll() {
         scopeIO.launch {
