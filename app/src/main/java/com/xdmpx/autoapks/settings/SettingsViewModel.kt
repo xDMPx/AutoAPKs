@@ -29,14 +29,9 @@ class SettingsViewModel : ViewModel() {
     private val _settingsState = MutableStateFlow(SettingsState())
     val settingsState: StateFlow<SettingsState> = _settingsState.asStateFlow()
 
-    lateinit var onThemeUpdate: (Boolean, Boolean, ThemeType) -> Unit
     lateinit var onDeleteAllClick: () -> Unit
     lateinit var onExportClick: () -> Unit
     lateinit var onImportClick: () -> Unit
-
-    fun registerOnThemeUpdate(onThemeUpdate: (Boolean, Boolean, ThemeType) -> Unit) {
-        this.onThemeUpdate = onThemeUpdate
-    }
 
     fun registerOnDeleteAllClick(onDeleteAllClick: () -> Unit) {
         this.onDeleteAllClick = onDeleteAllClick
@@ -54,22 +49,12 @@ class SettingsViewModel : ViewModel() {
         _settingsState.value.let {
             _settingsState.value = it.copy(usePureDark = !it.usePureDark)
         }
-        onThemeUpdate(
-            _settingsState.value.usePureDark,
-            _settingsState.value.useDynamicColor,
-            _settingsState.value.theme
-        )
     }
 
     fun toggleUseDynamicColor() {
         _settingsState.value.let {
             _settingsState.value = it.copy(useDynamicColor = !it.useDynamicColor)
         }
-        onThemeUpdate(
-            _settingsState.value.usePureDark,
-            _settingsState.value.useDynamicColor,
-            _settingsState.value.theme
-        )
     }
 
     fun toggleConfirmationDialogRemove() {
@@ -88,11 +73,6 @@ class SettingsViewModel : ViewModel() {
         _settingsState.value.let {
             _settingsState.value = it.copy(theme = theme)
         }
-        onThemeUpdate(
-            _settingsState.value.usePureDark,
-            _settingsState.value.useDynamicColor,
-            _settingsState.value.theme
-        )
     }
 
     suspend fun loadSettings(context: Context) {

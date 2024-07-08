@@ -17,8 +17,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,7 +34,6 @@ import com.xdmpx.autoapks.apk.github.GitHubAPK
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.database.GitHubAPKEntity
-import com.xdmpx.autoapks.datastore.ThemeType
 import com.xdmpx.autoapks.settings.Settings
 import com.xdmpx.autoapks.settings.SettingsUI
 import com.xdmpx.autoapks.ui.theme.AutoAPKsTheme
@@ -47,9 +47,6 @@ import java.time.LocalDate
 class MainActivity : ComponentActivity() {
     private val TAG_DEBUG = "MainActivity"
     private val settingsInstance = Settings.getInstance()
-    private var usePureDark = mutableStateOf(false)
-    private var useDynamicColor = mutableStateOf(false)
-    private var theme = mutableStateOf(ThemeType.SYSTEM)
     private lateinit var database: GitHubAPKDao
     private var apks = mutableStateListOf<GitHubAPK?>()
     private val scopeIO = CoroutineScope(Dispatchers.IO)
@@ -72,20 +69,16 @@ class MainActivity : ComponentActivity() {
         settingsInstance.registerOnExportClick { this@MainActivity.exportToJSON() }
         settingsInstance.registerOnImportClick { this@MainActivity.importFromJSON() }
         settingsInstance.registerOnDeleteAllClick { this@MainActivity.deleteAll() }
-        settingsInstance.registerOnThemeUpdate { usePureDark, useDynamicColor, theme ->
-            this@MainActivity.usePureDark.value = usePureDark
-            this@MainActivity.useDynamicColor.value = useDynamicColor
-            this@MainActivity.theme.value = theme
-        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val settings by settingsInstance.settingsState.collectAsState()
             AutoAPKsTheme(
-                pureDarkTheme = usePureDark.value,
-                dynamicColor = useDynamicColor.value,
-                theme = theme.value
+                pureDarkTheme = settings.usePureDark,
+                dynamicColor = settings.useDynamicColor,
+                theme = settings.theme
             ) {
                 // A surface container using the 'background' color from the theme
                 Surface(
@@ -119,9 +112,6 @@ class MainActivity : ComponentActivity() {
         scopeIO.launch {
             settingsInstance.loadSettings(this@MainActivity)
             val settings = settingsInstance.settingsState.value
-            usePureDark.value = settings.usePureDark
-            useDynamicColor.value = settings.useDynamicColor
-            theme.value = settings.theme
 
             var apks = database.getAll()
 
