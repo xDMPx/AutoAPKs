@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -98,7 +99,21 @@ object MainUI {
     }
 
     @Composable
-    fun Main(
+    fun MainScreen(
+        apks: List<GitHubAPK?>,
+        onNavigateToAbout: () -> Unit,
+        onNavigateToSettings: () -> Unit,
+        addAPKRepository: (repository: String, baseDirectory: String) -> Unit
+    ) {
+        Scaffold(
+            topBar = { TopAppBar(onNavigateToAbout, onNavigateToSettings) },
+        ) { innerPadding ->
+            MainUI(apks, Modifier.padding(innerPadding), addAPKRepository)
+        }
+    }
+
+    @Composable
+    fun MainUI(
         apks: List<GitHubAPK?>,
         modifier: Modifier = Modifier,
         addAPKRepository: (repository: String, baseDirectory: String) -> Unit
