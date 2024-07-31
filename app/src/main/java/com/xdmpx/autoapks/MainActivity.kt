@@ -6,13 +6,8 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -21,15 +16,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.xdmpx.autoapks.MainUI.AddAPKRepository
+import com.xdmpx.autoapks.MainUI.Main
 import com.xdmpx.autoapks.about.About
-import com.xdmpx.autoapks.apk.ApkUI.ApkCard
 import com.xdmpx.autoapks.apk.github.GitHubAPK
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
@@ -166,40 +158,15 @@ class MainActivity : ComponentActivity() {
         onNavigateToAbout: () -> Unit,
         onNavigateToSettings: () -> Unit,
     ) {
+        val apks = remember { apks }
         Scaffold(
             topBar = { MainUI.TopAppBar(onNavigateToAbout, onNavigateToSettings) },
         ) { innerPadding ->
-            Main(Modifier.padding(innerPadding))
-        }
-    }
-
-    @Composable
-    fun Main(modifier: Modifier = Modifier) {
-        val apks = remember { apks }
-        val apksColumnWeight = 0.83f
-
-        Column(modifier) {
-            LazyColumn(
-                Modifier
-                    .fillMaxSize()
-                    .weight(apksColumnWeight)
-            ) {
-                items(apks) { apk ->
-                    if (apk == null) return@items
-                    Spacer(modifier = Modifier.size(10.dp))
-                    ApkCard(apk)
-                }
+            Main(apks.toList(), Modifier.padding(innerPadding)) { r, b ->
+                addAPKRepository(r, b)
             }
-            AddAPKRepository(
-                Alignment.BottomCenter,
-                Modifier
-                    .fillMaxSize()
-                    .weight(1f - apksColumnWeight)
-                    .padding(16.dp)
-            ) { r, b -> addAPKRepository(r, b) }
         }
     }
-
 
     private fun deleteAll() {
         scopeIO.launch {

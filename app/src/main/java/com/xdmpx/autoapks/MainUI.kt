@@ -5,9 +5,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -34,6 +39,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getString
+import com.xdmpx.autoapks.apk.ApkUI.ApkCard
+import com.xdmpx.autoapks.apk.github.GitHubAPK
 import com.xdmpx.autoapks.apk.github.GitHubRepoFetcher
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.utils.Utils
@@ -88,6 +95,37 @@ object MainUI {
                 })
         }
 
+    }
+
+    @Composable
+    fun Main(
+        apks: List<GitHubAPK?>,
+        modifier: Modifier = Modifier,
+        addAPKRepository: (repository: String, baseDirectory: String) -> Unit
+    ) {
+        val apksColumnWeight = 0.83f
+
+        Column(modifier) {
+            LazyColumn(
+                Modifier
+                    .fillMaxSize()
+                    .weight(apksColumnWeight)
+            ) {
+                items(apks) { apk ->
+                    if (apk == null) return@items
+                    Spacer(modifier = Modifier.size(10.dp))
+                    ApkCard(apk)
+                }
+            }
+            AddAPKRepository(
+                Alignment.BottomCenter,
+                Modifier
+                    .fillMaxSize()
+                    .weight(1f - apksColumnWeight)
+                    .padding(16.dp),
+                addAPKRepository
+            )
+        }
     }
 
     @Composable
