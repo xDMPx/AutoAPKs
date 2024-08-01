@@ -11,7 +11,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -34,9 +33,9 @@ import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
     private val TAG_DEBUG = "MainActivity"
+    private val mainViewModel = MainViewModel(listOf())
     private val settingsInstance = Settings.getInstance()
     private lateinit var database: GitHubAPKDao
-    private var apks = mutableStateListOf<GitHubAPK?>()
     private val scopeIO = CoroutineScope(Dispatchers.IO)
 
     private val createDocument =
@@ -63,6 +62,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val settings by settingsInstance.settingsState.collectAsState()
+            val mainState by mainViewModel.mainState.collectAsState()
+
             AutoAPKsTheme(
                 pureDarkTheme = settings.usePureDark,
                 dynamicColor = settings.useDynamicColor,
@@ -75,7 +76,7 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     NavHost(navController = navController, startDestination = "main") {
                         composable("main") {
-                            MainScreen(apks.toList(),
+                            MainScreen(mainState.apks.toList(),
                                 onNavigateToSettings = { navController.navigate("settings") },
                                 onNavigateToAbout = {
                                     navController.navigate("about")
@@ -115,9 +116,9 @@ class MainActivity : ComponentActivity() {
             }
 
             apks.forEach { it ->
-                this@MainActivity.apks.add(GitHubAPK(
+                this@MainActivity.mainViewModel.addAPK(GitHubAPK(
                     it, this@MainActivity
-                ) { gitHubAPK -> removeAPKRepository(gitHubAPK) })
+                ) { gitHubAPK -> mainViewModel.removeAPK(gitHubAPK) })
             }
         }
     }
@@ -125,7 +126,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         Log.d(TAG_DEBUG, "onResume")
-        apks.forEach {
+        this@MainActivity.mainViewModel.mainState.value.apks.forEach {
             it?.refresh(this@MainActivity)
         }
     }
@@ -142,22 +143,20 @@ class MainActivity : ComponentActivity() {
         scopeIO.launch {
             val apk = GitHubAPKEntity(repository, baseDirectory = baseDirectory)
             val apkId = database.insert(apk)
-            apks.add(GitHubAPK(
+            this@MainActivity.mainViewModel.addAPK(GitHubAPK(
                 database.get(apkId), this@MainActivity
-            ) { gitHubAPK -> removeAPKRepository(gitHubAPK) })
+            ) { gitHubAPK -> mainViewModel.removeAPK(gitHubAPK) })
         }
-    }
-
-    private fun removeAPKRepository(apk: GitHubAPK) {
-        apks[apks.indexOf(apk)] = null
     }
 
     private fun deleteAll() {
         scopeIO.launch {
-            for (i in apks.indices) {
-                val apk = apks[i]
+            for (i in mainViewModel.mainState.value.apks.indices) {
+                val apk =  mainViewModel.mainState.value.apks[i]
                 apk?.onRemoveRequest()
-                apks[i] = null
+                if (apk != null) {
+                    mainViewModel.removeAPK(apk)
+                }
             }
         }
     }
