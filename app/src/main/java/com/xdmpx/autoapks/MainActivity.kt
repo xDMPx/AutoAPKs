@@ -52,10 +52,9 @@ class MainActivity : ComponentActivity() {
         }
 
     init {
-        settingsInstance.registerOnDeleteAllClick { this@MainActivity.deleteAll() }
         settingsInstance.registerOnExportClick { this@MainActivity.exportToJSON() }
         settingsInstance.registerOnImportClick { this@MainActivity.importFromJSON() }
-        settingsInstance.registerOnDeleteAllClick { this@MainActivity.deleteAll() }
+        settingsInstance.registerOnDeleteAllClick { this@MainActivity.mainViewModel.deleteAll() }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,7 +80,7 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToAbout = {
                                     navController.navigate("about")
                                 }) { r, b ->
-                                addAPKRepository(r, b)
+                                mainViewModel.addAPKRepository(this@MainActivity, r, b)
                             }
                         }
                         composable("settings") {
@@ -139,28 +138,6 @@ class MainActivity : ComponentActivity() {
         super.onStop()
     }
 
-    private fun addAPKRepository(repository: String, baseDirectory: String) {
-        scopeIO.launch {
-            val apk = GitHubAPKEntity(repository, baseDirectory = baseDirectory)
-            val apkId = database.insert(apk)
-            this@MainActivity.mainViewModel.addAPK(GitHubAPK(
-                database.get(apkId), this@MainActivity
-            ) { gitHubAPK -> mainViewModel.removeAPK(gitHubAPK) })
-        }
-    }
-
-    private fun deleteAll() {
-        scopeIO.launch {
-            for (i in mainViewModel.mainState.value.apks.indices) {
-                val apk =  mainViewModel.mainState.value.apks[i]
-                apk?.onRemoveRequest()
-                if (apk != null) {
-                    mainViewModel.removeAPK(apk)
-                }
-            }
-        }
-    }
-
     private fun exportToJSON() {
         val date = LocalDate.now()
         val year = date.year
@@ -168,7 +145,6 @@ class MainActivity : ComponentActivity() {
         val day = date.dayOfMonth
         createDocument.launch("apks_export_${year}_${month}_$day.json")
     }
-
 
     private fun exportToJSONCallback(uri: Uri?) {
         if (uri == null) return
@@ -199,8 +175,8 @@ class MainActivity : ComponentActivity() {
 
         scopeIO.launch {
             if (Utils.importFromJSON(this@MainActivity, uri, addAPK = { repository, baseDirectory ->
-                    addAPKRepository(
-                        repository, baseDirectory
+                    mainViewModel.addAPKRepository(
+                        this@MainActivity, repository, baseDirectory
                     )
                 })) {
                 runOnUiThread {
