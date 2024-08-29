@@ -1,5 +1,6 @@
 package com.xdmpx.autoapks
 
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -15,21 +16,23 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.android.volley.RequestQueue
+import com.android.volley.toolbox.JsonArrayRequest
 import com.xdmpx.autoapks.MainUI.MainScreen
 import com.xdmpx.autoapks.about.About
 import com.xdmpx.autoapks.apk.github.GitHubAPK
 import com.xdmpx.autoapks.database.GitHubAPKDao
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
-import com.xdmpx.autoapks.database.GitHubAPKEntity
 import com.xdmpx.autoapks.settings.Settings
 import com.xdmpx.autoapks.settings.SettingsUI
 import com.xdmpx.autoapks.ui.theme.AutoAPKsTheme
 import com.xdmpx.autoapks.utils.Utils
 import com.xdmpx.autoapks.utils.Utils.ShortToast
+import com.xdmpx.autoapks.utils.VRequestQueue
+import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
     private val TAG_DEBUG = "MainActivity"
@@ -104,14 +107,10 @@ class MainActivity : ComponentActivity() {
             settingsInstance.loadSettings(this@MainActivity)
             val settings = settingsInstance.settingsState.value
 
-            var apks = database.getAll()
+            val apks = database.getAll()
 
             if (apks.isEmpty() && settings.autoAddApksRepos) {
-                val autoapks = GitHubAPKEntity("xDMPx/AutoAPKs")
-                val normscount = GitHubAPKEntity("xDMPx/NormsCount")
-
-                database.insertAll(autoapks, normscount)
-                apks = database.getAll()
+                fetchAutoAddApksRepos(this@MainActivity)
             }
 
             apks.forEach { it ->
@@ -120,6 +119,32 @@ class MainActivity : ComponentActivity() {
                 ) { gitHubAPK -> mainViewModel.removeAPK(gitHubAPK) })
             }
         }
+    }
+
+    private fun fetchAutoAddApksRepos(context: Context) {
+        val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
+        val requestUrl: String =
+            "https://raw.githubusercontent.com/xDMPx/AutoAPKs/main/ApksRepos.json"
+
+        Log.d(TAG_DEBUG, "fetchAutoAddApksRepos")
+        val apksReposJsonRequest = object : JsonArrayRequest(requestUrl, { response ->
+            Log.d(TAG_DEBUG, "fetchAutoAddApksRepos::$requestUrl -> $response")
+            for (i in 0..<response.length()) {
+                this@MainActivity.mainViewModel.addAPKRepository(
+                    this@MainActivity, response.getString(i), "app"
+                )
+            }
+        }, { error ->
+            Log.d(TAG_DEBUG, "fetchAutoAddApksRepos::ERROR::$requestUrl -> ${error.message}")
+            // TODO: Handle error
+        }) {
+            override fun getHeaders(): Map<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Accept"] = "application/json"
+                return headers
+            }
+        }
+        requestQueue.add(apksReposJsonRequest)
     }
 
     override fun onResume() {
