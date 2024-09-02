@@ -130,8 +130,12 @@ class MainActivity : ComponentActivity() {
         val apksReposJsonRequest = object : JsonArrayRequest(requestUrl, { response ->
             Log.d(TAG_DEBUG, "fetchAutoAddApksRepos::$requestUrl -> $response")
             for (i in 0..<response.length()) {
+                val apkRepoData = response.getJSONObject(i)
+                val repo = apkRepoData.getString("repository")
+                val baseDirectory = apkRepoData.getString("base_directory")
+
                 this@MainActivity.mainViewModel.addAPKRepository(
-                    this@MainActivity, response.getString(i), "app"
+                    this@MainActivity, repo, baseDirectory
                 )
             }
         }, { error ->

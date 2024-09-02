@@ -1,4 +1,10 @@
 [
-    "xDMPx/AutoAPKs",
-    "xDMPx/NormsCount"
+    {
+        "repository": "xDMPx/AutoAPKs",
+        "base_directory": "app"
+    },
+    {
+        "repository": "xDMPx/NormsCount",
+        "base_directory": "app"
+    }
 ]
