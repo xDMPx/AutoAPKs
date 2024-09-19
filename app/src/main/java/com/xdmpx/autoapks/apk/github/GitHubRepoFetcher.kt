@@ -9,7 +9,7 @@ import com.android.volley.toolbox.StringRequest
 import com.xdmpx.autoapks.utils.VRequestQueue
 
 object GitHubRepoFetcher {
-    val TAG_DEBUG = "GitHubRepoFetcher"
+    private const val TAG_DEBUG = "GitHubRepoFetcher"
 
     private fun String?.substringAfterOrNull(delimiter: String): String? {
         this?.let { str ->

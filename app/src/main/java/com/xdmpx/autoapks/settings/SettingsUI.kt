@@ -43,8 +43,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.xdmpx.autoapks.R
 import com.xdmpx.autoapks.datastore.ThemeType
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 
 object SettingsUI {
 

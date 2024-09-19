@@ -27,7 +27,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 
 object Utils {
-    private val TAG_DEBUG = "Utils"
+    private const val TAG_DEBUG = "Utils"
 
     data class ApplicationVersion(val name: String, val code: Long)
 
