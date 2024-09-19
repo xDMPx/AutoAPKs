@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
@@ -36,6 +35,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -323,6 +323,7 @@ object ApkUI {
             pushStringAnnotation(
                 tag = "URL", annotation = url
             )
+            pushLink(LinkAnnotation.Url(url))
             withStyle(
                 style = SpanStyle(
                     color = getColorSchemeEx().annotatedText,
@@ -335,15 +336,7 @@ object ApkUI {
             pop()
         }
 
-        ClickableText(text = annotatedText, onClick = { offset ->
-            annotatedText.getStringAnnotations(
-                tag = "URL", start = offset, end = offset
-            ).firstOrNull()?.let { annotation ->
-                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))
-                ContextCompat.startActivity(context, browserIntent, null)
-            }
-        }, modifier = modifier)
-
+        Text(text = annotatedText, modifier = modifier)
     }
 
     @Composable
