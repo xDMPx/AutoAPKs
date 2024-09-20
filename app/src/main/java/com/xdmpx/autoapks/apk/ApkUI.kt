@@ -226,12 +226,12 @@ object ApkUI {
         val context = LocalContext.current
         var openRemoveAlertDialog by remember { mutableStateOf(false) }
 
-        Column(modifier = modifier) {
+        Column(modifier = modifier.fillMaxWidth()) {
             applicationPackageName?.let {
                 TextButton(onClick = {
                     Utils.uninstallApplication(context, it)
                     onDismissRequest()
-                }) {
+                }, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(id = R.string.uninstall))
                 }
             }
@@ -239,7 +239,7 @@ object ApkUI {
                 TextButton(onClick = {
                     onDismissRequest()
                     apkLink.let { Utils.installApplication(context, it) }
-                }) {
+                }, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(id = R.string.reinstall))
                 }
             }
@@ -250,8 +250,7 @@ object ApkUI {
                         onRemoveRequest()
                     }
                 } else openRemoveAlertDialog = true
-
-            }) {
+            }, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(id = R.string.remove))
             }
         }
@@ -318,7 +317,6 @@ object ApkUI {
 
     @Composable
     fun AnnotatedClickableText(text: String, url: String, modifier: Modifier = Modifier) {
-        val context = LocalContext.current
         val annotatedText = buildAnnotatedString {
             pushStringAnnotation(
                 tag = "URL", annotation = url
