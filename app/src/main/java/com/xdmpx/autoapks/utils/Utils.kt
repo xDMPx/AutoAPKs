@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat.startActivity
+import com.xdmpx.autoapks.apk.github.GitHubRepoFetcher
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import org.json.JSONArray
 import org.json.JSONObject
@@ -193,4 +194,16 @@ object Utils {
         }
     }
 
+    fun isValidRepository(
+        repo: String?, baseDirectory: String, context: Context, onResult: (valid: Boolean) -> Unit
+    ) {
+        if (repo.isNullOrBlank()) {
+            onResult(false)
+            return
+        }
+        GitHubRepoFetcher.validateAndroidAPKRepository(
+            repo, baseDirectory, context
+        ) { onResult(it) }
+
+    }
 }

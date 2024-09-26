@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getString
 import com.xdmpx.autoapks.apk.ApkUI.ApkCard
 import com.xdmpx.autoapks.apk.github.GitHubAPK
-import com.xdmpx.autoapks.apk.github.GitHubRepoFetcher
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import com.xdmpx.autoapks.utils.Utils
 import com.xdmpx.autoapks.utils.Utils.CustomDialog
@@ -278,27 +277,23 @@ object MainUI {
         TextButton(
             onClick = {
                 val repo = Utils.userInputToAPKRepository(userInput)
-                scopeIO.launch {
-                    repo?.let { repo ->
-                        if (database.getRepositoryByName(repo).isNullOrBlank()) {
-                            GitHubRepoFetcher.validateAndroidAPKRepository(
-                                repo, baseDirectory, context
-                            ) {
-                                if (it) {
-                                    onAddRequest(repo, baseDirectory)
-                                    MainScope().launch {
-                                        ShortToast(
-                                            context, "${getString(context, R.string.added)} $repo"
-                                        )
-                                    }
-                                } else {
-                                    MainScope().launch {
-                                        ShortToast(
-                                            context,
-                                            text = getString(context, R.string.invalid_repo)
-                                        )
-                                    }
-                                }
+                Utils.isValidRepository(repo, baseDirectory, context) { valid ->
+                    if (!valid) {
+                        MainScope().launch {
+                            ShortToast(
+                                context,
+                                text = getString(context, R.string.invalid_repo)
+                            )
+                        }
+                        return@isValidRepository
+                    }
+                    scopeIO.launch {
+                        if (database.getRepositoryByName(repo!!).isNullOrBlank()) {
+                            onAddRequest(repo, baseDirectory)
+                            MainScope().launch {
+                                ShortToast(
+                                    context, "${getString(context, R.string.added)} $repo"
+                                )
                             }
                         } else {
                             MainScope().launch {
@@ -306,12 +301,8 @@ object MainUI {
                             }
                         }
                     }
-                    if (repo.isNullOrBlank()) {
-                        MainScope().launch {
-                            ShortToast(context, text = getString(context, R.string.invalid_repo))
-                        }
-                    }
                 }
+
                 onDismissRequest()
             },
             modifier = Modifier.padding(8.dp),
