@@ -1,8 +1,12 @@
 package com.xdmpx.autoapks.utils
 
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageInfo
+import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
@@ -19,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.startActivity
 import com.xdmpx.autoapks.apk.github.GitHubRepoFetcher
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
@@ -102,8 +107,33 @@ object Utils {
     }
 
     fun installApplication(context: Context, apkLink: String) {
-        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(apkLink))
-        startActivity(context, browserIntent, null)
+        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val request = DownloadManager.Request(Uri.parse(apkLink)).setNotificationVisibility(
+            DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
+        )
+        val id = downloadManager.enqueue(request)
+        val broadcast = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                val apkUri = downloadManager.getUriForDownloadedFile(id)
+                if (context != null) {
+
+                    Log.d("onReceive", apkUri.toString())
+                    val installIntent = Intent(Intent.ACTION_INSTALL_PACKAGE)
+                    installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive")
+                    installIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    startActivity(context, installIntent, null)
+                }
+
+            }
+        }
+
+        ContextCompat.registerReceiver(
+            context,
+            broadcast,
+            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+            ContextCompat.RECEIVER_EXPORTED
+        )
+
     }
 
     fun userInputToAPKRepository(userInput: String): String? {

@@ -255,7 +255,8 @@ object ApkUI {
             }
         }
 
-        RemoveAlertDialog(openRemoveAlertDialog,
+        RemoveAlertDialog(
+            openRemoveAlertDialog,
             onDismissRequest = { openRemoveAlertDialog = false }) {
             openRemoveAlertDialog = false
             onDismissRequest()
