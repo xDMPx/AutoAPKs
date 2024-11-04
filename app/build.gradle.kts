@@ -8,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.xdmpx.autoapks"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.xdmpx.autoapks"
         minSdk = 30
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 11
         versionName = "0.1.1-dev"
 

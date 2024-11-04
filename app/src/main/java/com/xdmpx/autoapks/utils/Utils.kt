@@ -43,7 +43,7 @@ object Utils {
         val appInfo: PackageInfo? = packageManager.getPackageInfo(packageName, 0)
 
         appInfo?.let {
-            val version = ApplicationVersion(it.versionName, it.longVersionCode)
+            val version = it.versionName?.let { it1 -> ApplicationVersion(it1, it.longVersionCode) }
             Log.d(TAG_DEBUG, "getAppVersionByName::$packageName -> $version")
             return version
         }
@@ -74,13 +74,14 @@ object Utils {
         val appID = appName.substringBeforeLast('.')
 
         for (appInfo in installedApplications) {
-            if (appInfo.applicationInfo.name.isNullOrBlank() && appInfo.packageName.isNullOrBlank()) {
+            val applicationInfo = appInfo.applicationInfo ?: continue
+            if (applicationInfo.name.isNullOrBlank() && appInfo.packageName.isNullOrBlank()) {
                 continue
             }
-            if (appInfo.applicationInfo.name == appName || appInfo.packageName == appName) {
+            if (applicationInfo.name == appName || appInfo.packageName == appName) {
                 Log.d(TAG_DEBUG, "getAppPackageName::$appName ${appInfo.packageName}")
                 return appInfo.packageName
-            } else if (appInfo.applicationInfo.name == appID || appInfo.packageName == appID) {
+            } else if (applicationInfo.name == appID || appInfo.packageName == appID) {
                 Log.d(TAG_DEBUG, "getAppPackageName::$appName ${appInfo.packageName}")
                 return appInfo.packageName
             }
