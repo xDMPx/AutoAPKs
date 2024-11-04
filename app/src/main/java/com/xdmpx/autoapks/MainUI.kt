@@ -1,5 +1,6 @@
 package com.xdmpx.autoapks
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,12 +12,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -100,6 +105,7 @@ object MainUI {
     @Composable
     fun MainScreen(
         apks: List<GitHubAPK?>,
+        downloading: Boolean,
         onNavigateToAbout: () -> Unit,
         onNavigateToSettings: () -> Unit,
         addAPKRepository: (repository: String, baseDirectory: String) -> Unit
@@ -108,6 +114,16 @@ object MainUI {
             topBar = { TopAppBar(onNavigateToAbout, onNavigateToSettings) },
         ) { innerPadding ->
             MainUI(apks, Modifier.padding(innerPadding), addAPKRepository)
+        }
+
+        if (downloading) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Gray.copy(alpha = 0.5f))
+            ) {
+                IndeterminateCircularIndicator()
+            }
         }
     }
 
@@ -281,8 +297,7 @@ object MainUI {
                     if (!valid) {
                         MainScope().launch {
                             ShortToast(
-                                context,
-                                text = getString(context, R.string.invalid_repo)
+                                context, text = getString(context, R.string.invalid_repo)
                             )
                         }
                         return@isValidRepository
@@ -309,5 +324,16 @@ object MainUI {
         ) {
             Text(stringResource(id = R.string.add))
         }
+    }
+
+    @Composable
+    fun IndeterminateCircularIndicator() {
+        CircularProgressIndicator(
+            modifier = Modifier
+                .fillMaxSize()
+                .wrapContentSize(Alignment.Center),
+            color = MaterialTheme.colorScheme.secondary,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+        )
     }
 }

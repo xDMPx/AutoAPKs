@@ -79,6 +79,7 @@ class MainActivity : ComponentActivity() {
                     NavHost(navController = navController, startDestination = "main") {
                         composable("main") {
                             MainScreen(mainState.apks.toList(),
+                                settings.downloading,
                                 onNavigateToSettings = { navController.navigate("settings") },
                                 onNavigateToAbout = {
                                     navController.navigate("about")

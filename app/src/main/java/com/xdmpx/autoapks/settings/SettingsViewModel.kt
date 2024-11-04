@@ -22,6 +22,7 @@ data class SettingsState(
     val theme: ThemeType = ThemeType.SYSTEM,
     val confirmationDialogRemove: Boolean = true,
     val autoAddApksRepos: Boolean = true,
+    val downloading: Boolean = false,
 )
 
 class SettingsViewModel : ViewModel() {
@@ -72,6 +73,12 @@ class SettingsViewModel : ViewModel() {
     fun setTheme(theme: ThemeType) {
         _settingsState.value.let {
             _settingsState.value = it.copy(theme = theme)
+        }
+    }
+
+    fun setDownloading(downloading: Boolean) {
+        _settingsState.value.let {
+            _settingsState.value = it.copy(downloading = downloading)
         }
     }
 

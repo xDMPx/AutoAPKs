@@ -113,12 +113,14 @@ object Utils {
             DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
         )
         val id = downloadManager.enqueue(request)
+        com.xdmpx.autoapks.settings.Settings.getInstance().setDownloading(true)
+
         val broadcast = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 val apkUri = downloadManager.getUriForDownloadedFile(id)
                 if (context != null) {
-
                     Log.d("onReceive", apkUri.toString())
+                    com.xdmpx.autoapks.settings.Settings.getInstance().setDownloading(false)
                     val installIntent = Intent(Intent.ACTION_INSTALL_PACKAGE)
                     installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive")
                     installIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
