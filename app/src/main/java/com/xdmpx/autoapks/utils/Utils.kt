@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageInfo
-import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
@@ -31,6 +30,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import androidx.core.net.toUri
 
 object Utils {
     private const val TAG_DEBUG = "Utils"
@@ -109,7 +109,7 @@ object Utils {
 
     fun installApplication(context: Context, apkLink: String) {
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val request = DownloadManager.Request(Uri.parse(apkLink)).setNotificationVisibility(
+        val request = DownloadManager.Request(apkLink.toUri()).setNotificationVisibility(
             DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
         )
         val id = downloadManager.enqueue(request)

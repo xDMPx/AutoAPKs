@@ -124,8 +124,7 @@ class MainActivity : ComponentActivity() {
 
     private fun fetchAutoAddApksRepos(context: Context) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
-        val requestUrl: String =
-            "https://raw.githubusercontent.com/xDMPx/AutoAPKs/main/ApksRepos.json"
+        val requestUrl = "https://raw.githubusercontent.com/xDMPx/AutoAPKs/main/ApksRepos.json"
 
         Log.d(TAG_DEBUG, "fetchAutoAddApksRepos")
         val apksReposJsonRequest = object : JsonArrayRequest(requestUrl, { response ->

@@ -490,8 +490,7 @@ object GitHubRepoFetcher {
         onResult: (iconUrl: String) -> Unit
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
-        val requestUrl: String =
-            "https://github.com/$repository/tree-commit-info/$branchName/$baseDirectory/src/main/res/$iconFolder"
+        val requestUrl = "https://github.com/$repository/tree-commit-info/$branchName/$baseDirectory/src/main/res/$iconFolder"
 
         Log.d(TAG_DEBUG, "requestIconUrl::$repository -> $requestUrl")
         val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->

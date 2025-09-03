@@ -53,6 +53,7 @@ import com.xdmpx.autoapks.utils.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 object ApkUI {
 
@@ -309,7 +310,7 @@ object ApkUI {
     fun UpdateButton(apkLink: String, modifier: Modifier = Modifier) {
         val context = LocalContext.current
         Button(onClick = {
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(apkLink))
+            val browserIntent = Intent(Intent.ACTION_VIEW, apkLink.toUri())
             ContextCompat.startActivity(context, browserIntent, null)
         }, modifier) {
             Text(stringResource(id = R.string.update))
