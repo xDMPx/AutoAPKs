@@ -54,9 +54,9 @@ object GitHubRepoFetcher {
         val branchesRequest = StringRequest(Request.Method.GET, requestUrl, { response ->
             val defaultBranchList =
                 response.substringAfterOrNull(">Default<").substringBeforeOrNull("</table>")
-            val defaultBranchName = defaultBranchList.substringAfterOrNull("class=\"BranchName")
-                .substringAfterOrNull("<div title=\"").substringAfterOrNull(">")
-                .substringBeforeOrNull("</div></a>")
+            val defaultBranchName =
+                defaultBranchList.substringAfterOrNull("title=\"").substringAfterOrNull(">")
+                    .substringBeforeOrNull("</div></a>")
 
             Log.d(TAG_DEBUG, "fetchDefaultRepoBranch::$requestUrl -> $defaultBranchName")
             defaultBranchName?.let { onResult(it) }
