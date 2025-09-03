@@ -1,7 +1,6 @@
 package com.xdmpx.autoapks.apk
 
 import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -42,7 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.xdmpx.autoapks.R
 import com.xdmpx.autoapks.apk.github.GitHubAPK
@@ -53,7 +52,6 @@ import com.xdmpx.autoapks.utils.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import androidx.core.net.toUri
 
 object ApkUI {
 
@@ -311,7 +309,7 @@ object ApkUI {
         val context = LocalContext.current
         Button(onClick = {
             val browserIntent = Intent(Intent.ACTION_VIEW, apkLink.toUri())
-            ContextCompat.startActivity(context, browserIntent, null)
+            context.startActivity(browserIntent, null)
         }, modifier) {
             Text(stringResource(id = R.string.update))
         }

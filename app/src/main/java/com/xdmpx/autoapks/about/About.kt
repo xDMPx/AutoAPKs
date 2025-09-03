@@ -39,7 +39,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getString
-import androidx.core.content.ContextCompat.startActivity
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.net.toUri
 import com.xdmpx.autoapks.BuildConfig
@@ -198,7 +197,7 @@ object About {
 
     private fun openURL(context: Context, url: String) {
         val browserIntent = Intent(Intent.ACTION_VIEW, url.toUri())
-        startActivity(context, browserIntent, null)
+        context.startActivity(browserIntent, null)
     }
 
     private fun copyVersionToClipboard(context: Context) {

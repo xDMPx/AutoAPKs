@@ -95,7 +95,7 @@ object Utils {
         intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
         val uri = Uri.fromParts("package", packageName, null)
         intent.setData(uri)
-        startActivity(context, intent, null)
+        context.startActivity(intent, null)
     }
 
     fun uninstallApplication(context: Context, packageName: String) {
@@ -104,7 +104,7 @@ object Utils {
         intent.setAction(Intent.ACTION_DELETE)
         val uri = Uri.fromParts("package", packageName, null)
         intent.setData(uri)
-        startActivity(context, intent, null)
+        context.startActivity(intent, null)
     }
 
     fun installApplication(context: Context, apkLink: String) {
@@ -124,7 +124,7 @@ object Utils {
                     val installIntent = Intent(Intent.ACTION_INSTALL_PACKAGE)
                     installIntent.setDataAndType(apkUri, "application/vnd.android.package-archive")
                     installIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    startActivity(context, installIntent, null)
+                    context.startActivity(installIntent, null)
                 }
 
             }
