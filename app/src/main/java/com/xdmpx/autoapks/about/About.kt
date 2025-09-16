@@ -117,7 +117,7 @@ object About {
     private fun AboutTopAppBar(onNavigateToMain: () -> Unit) {
         TopAppBar(
             colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            containerColor = MaterialTheme.colorScheme.background,
             titleContentColor = MaterialTheme.colorScheme.primary,
         ), navigationIcon = {
             IconButton(onClick = { onNavigateToMain() }) {
