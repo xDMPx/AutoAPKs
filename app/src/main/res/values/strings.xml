@@ -52,6 +52,8 @@
     <string name="about_source_code">Source code</string>
     <string name="about_author">Author</string>
     <string name="about_license">License</string>
+    <string name="about_author_name">xDMPx</string>
+    <string name="about_license_name">Apache-2.0 license</string>
 
     <string name="about_source_code_url">https://github.com/xDMPx/AutoAPKs</string>
     <string name="about_license_url">"https://github.com/xDMPx/AutoAPKs/blob/main/LICENSE"</string>

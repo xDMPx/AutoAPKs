@@ -64,7 +64,8 @@ object About {
                     border = BorderStroke(0.25.dp, Color.Gray), modifier = Modifier.padding(12.dp)
                 ) {
                     AppInfo()
-                    AboutButton(text = "${stringResource(R.string.about_version)} v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    AboutButton(
+                        text = "${stringResource(R.string.about_version)} v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                         icon = {
                             Icon(
                                 painter = painterResource(id = R.drawable.rounded_info_24),
@@ -83,22 +84,27 @@ object About {
                     }) {
                         openURL(context, getString(context, R.string.about_source_code_url))
                     }
-                    AboutButton(text = stringResource(R.string.about_license), icon = {
-                        Icon(
-                            painter = painterResource(id = R.drawable.rounded_license_24),
-                            contentDescription = stringResource(id = R.string.about_license),
-                            modifier = it
-                        )
-                    }) {
+                    AboutButton(
+                        text = "${stringResource(R.string.about_license)}: ${
+                            stringResource(R.string.about_license_name)
+                        }", icon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.rounded_license_24),
+                                contentDescription = stringResource(id = R.string.about_license),
+                                modifier = it
+                            )
+                        }) {
                         openURL(context, getString(context, R.string.about_license_url))
                     }
-                    AboutButton(text = stringResource(R.string.about_author), icon = {
-                        Icon(
-                            painter = painterResource(id = R.drawable.rounded_account_circle_24),
-                            contentDescription = stringResource(id = R.string.about_author),
-                            modifier = it
-                        )
-                    }) {
+                    AboutButton(
+                        text = "${stringResource(R.string.about_author)}: ${stringResource(R.string.about_author_name)}",
+                        icon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.rounded_account_circle_24),
+                                contentDescription = stringResource(id = R.string.about_author),
+                                modifier = it
+                            )
+                        }) {
                         openURL(context, getString(context, R.string.about_author_url))
                     }
                 }
@@ -109,7 +115,8 @@ object About {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun AboutTopAppBar(onNavigateToMain: () -> Unit) {
-        TopAppBar(colors = TopAppBarDefaults.topAppBarColors(
+        TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             titleContentColor = MaterialTheme.colorScheme.primary,
         ), navigationIcon = {
@@ -186,8 +193,7 @@ object About {
             val modifier = Modifier.padding(aboutPadding)
             icon(modifier)
             Text(
-                text = text,
-                Modifier
+                text = text, Modifier
                     .fillMaxWidth()
                     .weight(0.75f)
                     .padding(aboutPadding)
