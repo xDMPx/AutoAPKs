@@ -549,16 +549,14 @@ object GitHubRepoFetcher {
 
         Log.d(TAG_DEBUG, "requestIcLauncherIcon::$repository -> $requestUrl")
         val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->
-            val icon = {
-                val length = response.length()
-                var name: String? = null
-                for (i in 0 until length) {
-                    if (response.names()?.get(i).toString().endsWith(".png")) {
-                        name = response.names()?.get(i).toString()
-                    }
+            val length = response.length()
+            var name: String? = null
+            for (i in 0 until length) {
+                if (response.names()?.get(i).toString().endsWith(".png")) {
+                    name = response.names()?.get(i).toString()
                 }
-                name
-            }()
+            }
+            val icon = name
             if (icon != null) {
                 val iconUrl =
                     "https://github.com/$repository/raw/$branchName/$baseDirectory/src/main/$icon"
