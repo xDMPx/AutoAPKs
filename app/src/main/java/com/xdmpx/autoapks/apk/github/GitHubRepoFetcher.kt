@@ -375,9 +375,14 @@ object GitHubRepoFetcher {
         context: Context,
         iconFolder: String? = null,
         iconName: String? = null,
+        tryIcLauncherIcon: Boolean = true,
         onResult: (iconUrl: String) -> Unit
     ) {
         when {
+            (tryIcLauncherIcon) -> {
+                requestIcLauncherIcon(repository, branchName, baseDirectory, context, onResult)
+            }
+
             (iconFolder == null) -> requestIconFolder(
                 repository, branchName, baseDirectory, context, onResult
             )
@@ -414,7 +419,9 @@ object GitHubRepoFetcher {
             }
 
             Log.d(TAG_DEBUG, "requestIconFolder::$requestUrl -> $folderName")
-            requestIcon(repository, branchName, baseDirectory, context, folderName, null, onResult)
+            requestIcon(
+                repository, branchName, baseDirectory, context, folderName, null, false, onResult
+            )
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestIconFolder::ERROR::$requestUrl -> ${error.message}"
@@ -466,6 +473,7 @@ object GitHubRepoFetcher {
                         context,
                         iconFolder,
                         iconName,
+                        false,
                         onResult
                     )
                 }
@@ -475,7 +483,9 @@ object GitHubRepoFetcher {
                 TAG_DEBUG, "requestIconLocation::ERROR::$requestUrl -> ${error.message}"
             )
             // TODO: Handle error
-            requestIcon(repository, branchName, baseDirectory, context, iconFolder, "", onResult)
+            requestIcon(
+                repository, branchName, baseDirectory, context, iconFolder, "", false, onResult
+            )
         })
         requestQueue.add(manifestRequest)
     }
@@ -490,7 +500,8 @@ object GitHubRepoFetcher {
         onResult: (iconUrl: String) -> Unit
     ) {
         val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
-        val requestUrl = "https://github.com/$repository/tree-commit-info/$branchName/$baseDirectory/src/main/res/$iconFolder"
+        val requestUrl =
+            "https://github.com/$repository/tree-commit-info/$branchName/$baseDirectory/src/main/res/$iconFolder"
 
         Log.d(TAG_DEBUG, "requestIconUrl::$repository -> $requestUrl")
         val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->
@@ -512,6 +523,60 @@ object GitHubRepoFetcher {
         }, { error ->
             Log.d(
                 TAG_DEBUG, "requestIconUrl::ERROR::$requestUrl -> ${error.message}"
+            )
+            // TODO: Handle error
+        }) {
+            override fun getHeaders(): Map<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Accept"] = "application/json"
+                return headers
+            }
+
+        }
+        requestQueue.add(treeInfoRequest)
+    }
+
+    private fun requestIcLauncherIcon(
+        repository: String,
+        branchName: String,
+        baseDirectory: String,
+        context: Context,
+        onResult: (iconUrl: String) -> Unit
+    ) {
+        val requestQueue: RequestQueue = VRequestQueue.getInstance(context)
+        val requestUrl =
+            "https://github.com/$repository/tree-commit-info/$branchName/$baseDirectory/src/main"
+
+        Log.d(TAG_DEBUG, "requestIcLauncherIcon::$repository -> $requestUrl")
+        val treeInfoRequest = object : JsonObjectRequest(requestUrl, { response ->
+            val icon = {
+                val length = response.length()
+                var name: String? = null
+                for (i in 0 until length) {
+                    if (response.names()?.get(i).toString().endsWith(".png")) {
+                        name = response.names()?.get(i).toString()
+                    }
+                }
+                name
+            }()
+            if (icon != null) {
+                val iconUrl =
+                    "https://github.com/$repository/raw/$branchName/$baseDirectory/src/main/$icon"
+
+                Log.d(TAG_DEBUG, "requestIcLauncherIcon::$requestUrl -> $iconUrl")
+                onResult(iconUrl)
+            } else {
+                requestIcon(
+                    repository, branchName, baseDirectory, context, null, null, false, onResult
+                )
+            }
+
+        }, { error ->
+            Log.d(
+                TAG_DEBUG, "requestIcLauncherIcon::ERROR::$requestUrl -> ${error.message}"
+            )
+            requestIcon(
+                repository, branchName, baseDirectory, context, null, null, false, onResult
             )
             // TODO: Handle error
         }) {

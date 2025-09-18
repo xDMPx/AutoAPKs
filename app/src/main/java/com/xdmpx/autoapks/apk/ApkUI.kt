@@ -55,7 +55,7 @@ import kotlinx.coroutines.launch
 
 object ApkUI {
 
-    private val TAG_DEBUG = "ApkUI"
+    private const val TAG_DEBUG = "ApkUI"
     private val scope = CoroutineScope(Dispatchers.IO)
     private val settingsInstance = Settings.getInstance()
 
