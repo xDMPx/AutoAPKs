@@ -23,14 +23,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.startActivity
+import androidx.core.net.toUri
 import com.xdmpx.autoapks.apk.github.GitHubRepoFetcher
 import com.xdmpx.autoapks.database.GitHubAPKDatabase
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import androidx.core.net.toUri
 
 object Utils {
     private const val TAG_DEBUG = "Utils"

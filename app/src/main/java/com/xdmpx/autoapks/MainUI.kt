@@ -64,7 +64,8 @@ object MainUI {
         onNavigateToAbout: () -> Unit,
         onNavigateToSettings: () -> Unit,
     ) {
-        androidx.compose.material3.TopAppBar(colors = TopAppBarDefaults.topAppBarColors(
+        androidx.compose.material3.TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background,
             titleContentColor = MaterialTheme.colorScheme.primary,
         ), title = { Text("AutoAPKs") }, actions = {
@@ -87,12 +88,14 @@ object MainUI {
         }
 
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text(text = stringResource(id = R.string.screen_settings)) },
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.screen_settings)) },
                 onClick = {
                     expanded = false
                     onNavigateToSettings()
                 })
-            DropdownMenuItem(text = { Text(text = stringResource(id = R.string.screen_about)) },
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.screen_about)) },
                 onClick = {
                     expanded = false
                     onNavigateToAbout()
@@ -173,11 +176,12 @@ object MainUI {
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Column {
-                        AddAPKRepositoryTextField(userInput, { userInput = it })
-                        AddAPKRepositoryAdvance(baseDirectory, { baseDirectory = it })
-                    }
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    AddAPKRepositoryTextField(userInput, { userInput = it })
+                    AddAPKRepositoryAdvance(baseDirectory, { baseDirectory = it })
                     AddAPKRepositoryDialogButtons(
                         userInput, baseDirectory, onDismissRequest, onAddRequest
                     )
@@ -227,6 +231,7 @@ object MainUI {
                         onValueChange = onValueChange,
                         maxLines = 1,
                         label = { Text(stringResource(id = R.string.base_directory)) },
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                 }
             }
